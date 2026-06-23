@@ -11,9 +11,6 @@
       '.site-footer',
       '.app-footer',
       'footer',
-      '.top-actions',
-      '#btnShareTop',
-      '#nativeShare',
       '#shareWhatsapp',
       '#shareFacebook',
       '#shareX',
@@ -60,7 +57,7 @@
       if (!item) return;
       const icon = card.querySelector('i');
       const titleNode = card.querySelector('b');
-      const textNode = card.querySelector('span');
+      const textNode = card.querySelector('span:not(.ios-step-dot)');
       if (icon) icon.outerHTML = '<span class="ios-step-dot">' + item[0] + '</span>';
       if (titleNode) titleNode.textContent = item[1];
       if (textNode) textNode.textContent = item[2];
@@ -100,17 +97,29 @@
     const panel = document.querySelector('.share-panel');
     if (!panel) return;
 
+    panel.querySelectorAll('a').forEach((node) => node.remove());
+
+    const nativeShare = document.getElementById('nativeShare');
+    if (nativeShare) nativeShare.hidden = true;
+
     const pdfButton = document.getElementById('downloadPdf');
     const copyButton = document.getElementById('copySummary');
-    panel.innerHTML = '';
-    if (pdfButton) panel.appendChild(pdfButton);
-    if (copyButton) panel.appendChild(copyButton);
+
+    if (pdfButton) {
+      pdfButton.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Esporta report';
+      if (!panel.contains(pdfButton)) panel.appendChild(pdfButton);
+    }
 
     if (copyButton) {
-      copyButton.addEventListener('click', () => {
-        const text = document.getElementById('explainBox')?.innerText || document.getElementById('reportArea')?.innerText || '';
-        nativeCopyFallback(text);
-      });
+      copyButton.innerHTML = '<i class="fa-solid fa-copy"></i> Copia dati';
+      if (!panel.contains(copyButton)) panel.appendChild(copyButton);
+      if (!copyButton.__iosCopyFallbackBound) {
+        copyButton.addEventListener('click', () => {
+          const text = document.getElementById('explainBox')?.innerText || document.getElementById('reportArea')?.innerText || '';
+          nativeCopyFallback(text);
+        });
+        copyButton.__iosCopyFallbackBound = true;
+      }
     }
   }
 
@@ -140,4 +149,5 @@
   // Re-run after the main app mutates screens/results.
   setTimeout(init, 400);
   setTimeout(init, 1200);
+  setTimeout(init, 2400);
 })();

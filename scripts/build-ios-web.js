@@ -20,6 +20,7 @@ const files = [
   'styles.css',
   'cookie-banner.css',
   'cookie-banner.js',
+  'ios-app.css',
   'robots.txt',
   'sitemap.xml',
   'manifest.webmanifest',
@@ -104,14 +105,36 @@ function copyDirSafe(relPath) {
   console.log(`Copied dir: ${relPath}`);
 }
 
+function injectIosAppLayer() {
+  const indexPath = path.join(out, 'index.html');
+  if (!fs.existsSync(indexPath)) return;
+
+  let html = fs.readFileSync(indexPath, 'utf8');
+
+  if (!html.includes('ios-app.css')) {
+    html = html.replace(
+      '</head>',
+      '  <link rel="stylesheet" href="ios-app.css?v=ios-app">\n</head>'
+    );
+  }
+
+  html = html.replace('<body>', '<body class="eot-ios-app">');
+
+  // In the native app the cookie banner, web footer and web social links are not useful.
+  // CSS hides them before the JavaScript app layer runs, avoiding a visible flash.
+  fs.writeFileSync(indexPath, html, 'utf8');
+  console.log('Injected iOS app stylesheet and body class');
+}
+
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });
 
 files.forEach(copyFileSafe);
 dirs.forEach(copyDirSafe);
 vendorFiles.forEach((file) => copyExternalFileSafe(file.src, file.dest));
+injectIosAppLayer();
 
-const requiredFiles = ['index.html', 'app.js', 'styles.css'];
+const requiredFiles = ['index.html', 'app.js', 'styles.css', 'ios-app.css'];
 const missing = requiredFiles.filter((file) => !fs.existsSync(path.join(out, file)));
 if (missing.length) {
   console.error(`Missing required iOS web files: ${missing.join(', ')}`);

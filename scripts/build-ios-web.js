@@ -22,6 +22,8 @@ const files = [
   'cookie-banner.js',
   'ios-app.css',
   'ios-app.js',
+  'ios-native-polish.css',
+  'ios-native-polish.js',
   'robots.txt',
   'sitemap.xml',
   'manifest.webmanifest',
@@ -106,6 +108,11 @@ function copyDirSafe(relPath) {
   console.log(`Copied dir: ${relPath}`);
 }
 
+function injectBefore(html, needle, snippet) {
+  if (html.includes(snippet.trim())) return html;
+  return html.replace(needle, `${snippet}\n${needle}`);
+}
+
 function injectIosAppLayer() {
   const indexPath = path.join(out, 'index.html');
   if (!fs.existsSync(indexPath)) return;
@@ -118,19 +125,29 @@ function injectIosAppLayer() {
     'vendor/jspdf.umd.min.js'
   );
 
-  if (!html.includes('ios-app.css')) {
-    html = html.replace(
-      '</head>',
-      '  <link rel="stylesheet" href="ios-app.css?v=ios-app-2">\n</head>'
-    );
-  }
+  html = injectBefore(
+    html,
+    '</head>',
+    '  <link rel="stylesheet" href="ios-app.css?v=ios-app-3">'
+  );
 
-  if (!html.includes('ios-app.js')) {
-    html = html.replace(
-      '</body>',
-      '<script src="ios-app.js?v=ios-app-2"></script>\n</body>'
-    );
-  }
+  html = injectBefore(
+    html,
+    '</head>',
+    '  <link rel="stylesheet" href="ios-native-polish.css?v=ios-native-1">'
+  );
+
+  html = injectBefore(
+    html,
+    '</body>',
+    '<script src="ios-app.js?v=ios-app-3"></script>'
+  );
+
+  html = injectBefore(
+    html,
+    '</body>',
+    '<script src="ios-native-polish.js?v=ios-native-1"></script>'
+  );
 
   html = html.replace('<html lang="it">', '<html lang="it" class="eot-ios-app">');
   html = html.replace('<body>', '<body class="eot-ios-app">');
@@ -138,7 +155,7 @@ function injectIosAppLayer() {
   // In the native app the cookie banner, web footer and web social links are not useful.
   // CSS hides them before the JavaScript app layer runs, avoiding a visible flash.
   fs.writeFileSync(indexPath, html, 'utf8');
-  console.log('Injected iOS app stylesheet, script and body class');
+  console.log('Injected iOS app stylesheet, script and native polish layer');
 }
 
 fs.rmSync(out, { recursive: true, force: true });
@@ -149,7 +166,7 @@ dirs.forEach(copyDirSafe);
 vendorFiles.forEach((file) => copyExternalFileSafe(file.src, file.dest));
 injectIosAppLayer();
 
-const requiredFiles = ['index.html', 'app.js', 'styles.css', 'ios-app.css', 'ios-app.js'];
+const requiredFiles = ['index.html', 'app.js', 'styles.css', 'ios-app.css', 'ios-app.js', 'ios-native-polish.css', 'ios-native-polish.js'];
 const missing = requiredFiles.filter((file) => !fs.existsSync(path.join(out, file)));
 if (missing.length) {
   console.error(`Missing required iOS web files: ${missing.join(', ')}`);

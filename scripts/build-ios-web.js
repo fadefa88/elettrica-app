@@ -24,6 +24,7 @@ const files = [
   'ios-app.js',
   'ios-native-polish.css',
   'ios-native-polish.js',
+  'ios-functional-fixes.js',
   'robots.txt',
   'sitemap.xml',
   'manifest.webmanifest',
@@ -128,25 +129,31 @@ function injectIosAppLayer() {
   html = injectBefore(
     html,
     '</head>',
-    '  <link rel="stylesheet" href="ios-app.css?v=ios-app-3">'
+    '  <link rel="stylesheet" href="ios-app.css?v=ios-app-4">'
   );
 
   html = injectBefore(
     html,
     '</head>',
-    '  <link rel="stylesheet" href="ios-native-polish.css?v=ios-native-1">'
+    '  <link rel="stylesheet" href="ios-native-polish.css?v=ios-native-2">'
   );
 
   html = injectBefore(
     html,
     '</body>',
-    '<script src="ios-app.js?v=ios-app-3"></script>'
+    '<script src="ios-app.js?v=ios-app-4"></script>'
   );
 
   html = injectBefore(
     html,
     '</body>',
-    '<script src="ios-native-polish.js?v=ios-native-1"></script>'
+    '<script src="ios-native-polish.js?v=ios-native-2"></script>'
+  );
+
+  html = injectBefore(
+    html,
+    '</body>',
+    '<script src="ios-functional-fixes.js?v=ios-functional-1"></script>'
   );
 
   html = html.replace('<html lang="it">', '<html lang="it" class="eot-ios-app">');
@@ -155,7 +162,7 @@ function injectIosAppLayer() {
   // In the native app the cookie banner, web footer and web social links are not useful.
   // CSS hides them before the JavaScript app layer runs, avoiding a visible flash.
   fs.writeFileSync(indexPath, html, 'utf8');
-  console.log('Injected iOS app stylesheet, script and native polish layer');
+  console.log('Injected iOS app stylesheet, script, native polish layer and functional fixes');
 }
 
 fs.rmSync(out, { recursive: true, force: true });
@@ -166,7 +173,7 @@ dirs.forEach(copyDirSafe);
 vendorFiles.forEach((file) => copyExternalFileSafe(file.src, file.dest));
 injectIosAppLayer();
 
-const requiredFiles = ['index.html', 'app.js', 'styles.css', 'ios-app.css', 'ios-app.js', 'ios-native-polish.css', 'ios-native-polish.js'];
+const requiredFiles = ['index.html', 'app.js', 'styles.css', 'ios-app.css', 'ios-app.js', 'ios-native-polish.css', 'ios-native-polish.js', 'ios-functional-fixes.js'];
 const missing = requiredFiles.filter((file) => !fs.existsSync(path.join(out, file)));
 if (missing.length) {
   console.error(`Missing required iOS web files: ${missing.join(', ')}`);

@@ -21,6 +21,10 @@ workflows:
         XCODE_WORKSPACE: ios/App/App.xcworkspace
         XCODE_SCHEME: App
         APP_VERSION: 1.0.0
+        # Original repository already uploaded build 7 to App Store Connect.
+        # The app-only repository starts Codemagic BUILD_NUMBER again from 1,
+        # so add an offset to keep iOS build numbers increasing: 8, 9, 10...
+        BUILD_NUMBER_OFFSET: 7
 
     triggering:
       events:
@@ -58,8 +62,10 @@ workflows:
 
       - name: Set app version and build number
         script: |
+          APP_BUILD_NUMBER=$((BUILD_NUMBER + BUILD_NUMBER_OFFSET))
+          echo "Using iOS app version $APP_VERSION build $APP_BUILD_NUMBER"
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $APP_VERSION" ios/App/App/Info.plist || true
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $APP_BUILD_NUMBER" ios/App/App/Info.plist || true
 
       - name: Set up code signing settings on Xcode project
         script: |

@@ -21,6 +21,7 @@ const files = [
   'cookie-banner.css',
   'cookie-banner.js',
   'ios-app.css',
+  'ios-app.js',
   'robots.txt',
   'sitemap.xml',
   'manifest.webmanifest',
@@ -111,19 +112,33 @@ function injectIosAppLayer() {
 
   let html = fs.readFileSync(indexPath, 'utf8');
 
+  // Use bundled assets in the native app. Remote CDN dependencies are fragile in WebView/offline mode.
+  html = html.replace(
+    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+    'vendor/jspdf.umd.min.js'
+  );
+
   if (!html.includes('ios-app.css')) {
     html = html.replace(
       '</head>',
-      '  <link rel="stylesheet" href="ios-app.css?v=ios-app">\n</head>'
+      '  <link rel="stylesheet" href="ios-app.css?v=ios-app-2">\n</head>'
     );
   }
 
+  if (!html.includes('ios-app.js')) {
+    html = html.replace(
+      '</body>',
+      '<script src="ios-app.js?v=ios-app-2"></script>\n</body>'
+    );
+  }
+
+  html = html.replace('<html lang="it">', '<html lang="it" class="eot-ios-app">');
   html = html.replace('<body>', '<body class="eot-ios-app">');
 
   // In the native app the cookie banner, web footer and web social links are not useful.
   // CSS hides them before the JavaScript app layer runs, avoiding a visible flash.
   fs.writeFileSync(indexPath, html, 'utf8');
-  console.log('Injected iOS app stylesheet and body class');
+  console.log('Injected iOS app stylesheet, script and body class');
 }
 
 fs.rmSync(out, { recursive: true, force: true });
@@ -134,7 +149,7 @@ dirs.forEach(copyDirSafe);
 vendorFiles.forEach((file) => copyExternalFileSafe(file.src, file.dest));
 injectIosAppLayer();
 
-const requiredFiles = ['index.html', 'app.js', 'styles.css', 'ios-app.css'];
+const requiredFiles = ['index.html', 'app.js', 'styles.css', 'ios-app.css', 'ios-app.js'];
 const missing = requiredFiles.filter((file) => !fs.existsSync(path.join(out, file)));
 if (missing.length) {
   console.error(`Missing required iOS web files: ${missing.join(', ')}`);

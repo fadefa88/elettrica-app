@@ -32,6 +32,13 @@ const dirs = [
   'data'
 ];
 
+const vendorFiles = [
+  {
+    src: 'node_modules/jspdf/dist/jspdf.umd.min.js',
+    dest: 'vendor/jspdf.umd.min.js'
+  }
+];
+
 const ignoredPathParts = [
   '/.git/',
   '/.github/',
@@ -73,6 +80,18 @@ function copyFileSafe(relPath) {
   console.log(`Copied file: ${relPath}`);
 }
 
+function copyExternalFileSafe(srcRelPath, destRelPath) {
+  const src = sourcePath(srcRelPath);
+  if (!fs.existsSync(src)) {
+    console.warn(`Optional vendor file missing: ${srcRelPath}`);
+    return;
+  }
+  const dest = path.join(out, destRelPath);
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.copyFileSync(src, dest);
+  console.log(`Copied vendor: ${destRelPath}`);
+}
+
 function copyDirSafe(relPath) {
   if (!exists(relPath)) return;
   const src = sourcePath(relPath);
@@ -90,6 +109,7 @@ fs.mkdirSync(out, { recursive: true });
 
 files.forEach(copyFileSafe);
 dirs.forEach(copyDirSafe);
+vendorFiles.forEach((file) => copyExternalFileSafe(file.src, file.dest));
 
 const requiredFiles = ['index.html', 'app.js', 'styles.css'];
 const missing = requiredFiles.filter((file) => !fs.existsSync(path.join(out, file)));

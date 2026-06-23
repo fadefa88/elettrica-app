@@ -1,0 +1,296 @@
+/* iOS Capacitor app layer: applied only inside the app bundle. */
+html.eot-ios-app,
+body.eot-ios-app {
+  background: #f6f8f6 !important;
+  min-height: 100%;
+  overscroll-behavior-y: none;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.eot-ios-app {
+  margin: 0 !important;
+  color: #101817;
+  touch-action: manipulation;
+}
+
+body.eot-ios-app input,
+body.eot-ios-app select,
+body.eot-ios-app textarea {
+  font-size: 16px !important;
+  min-height: 50px !important;
+  border-radius: 16px !important;
+  border-color: #dfe7e2 !important;
+  background: #fff !important;
+  color: #101817 !important;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+body.eot-ios-app input:focus,
+body.eot-ios-app select:focus,
+body.eot-ios-app textarea:focus {
+  outline: 0 !important;
+  border-color: #11b870 !important;
+  box-shadow: 0 0 0 4px rgba(17, 184, 112, .13) !important;
+}
+
+body.eot-ios-app .cookie-banner,
+body.eot-ios-app #cookieBanner,
+body.eot-ios-app .site-footer,
+body.eot-ios-app .app-footer,
+body.eot-ios-app footer,
+body.eot-ios-app .top-actions,
+body.eot-ios-app #btnShareTop,
+body.eot-ios-app #nativeShare,
+body.eot-ios-app #shareWhatsapp,
+body.eot-ios-app #shareFacebook,
+body.eot-ios-app #shareX,
+body.eot-ios-app #shareLinkedin,
+body.eot-ios-app .share-panel a {
+  display: none !important;
+}
+
+body.eot-ios-app .app-bg {
+  min-height: 100dvh;
+  padding: 0 !important;
+  background: #f6f8f6 !important;
+}
+
+body.eot-ios-app .app-shell {
+  max-width: none !important;
+  min-height: 100dvh !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #f7faf8 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  overflow: visible !important;
+}
+
+body.eot-ios-app .app-top {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  padding: calc(8px + env(safe-area-inset-top)) 14px 8px !important;
+  background: rgba(247, 250, 248, .96) !important;
+  border-bottom: 1px solid rgba(223, 231, 226, .95);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+body.eot-ios-app .brand {
+  min-width: 0;
+  flex: 1;
+  gap: 10px !important;
+}
+
+body.eot-ios-app .brand .logo,
+body.eot-ios-app .logo {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  border-radius: 11px !important;
+  box-shadow: none !important;
+}
+
+body.eot-ios-app .brand b {
+  font-size: 17px !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.035em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100vw - 76px);
+}
+
+body.eot-ios-app .brand small {
+  display: none !important;
+}
+
+body.eot-ios-app .progress {
+  height: 5px !important;
+  background: #dfe7e2 !important;
+}
+
+body.eot-ios-app .steps-label {
+  position: sticky;
+  top: calc(51px + env(safe-area-inset-top));
+  z-index: 45;
+  padding: 9px 14px 7px !important;
+  background: rgba(247, 250, 248, .95);
+  border-bottom: 1px solid rgba(223, 231, 226, .75);
+  overflow-x: auto;
+  gap: 16px;
+  justify-content: flex-start;
+  scrollbar-width: none;
+}
+
+body.eot-ios-app .steps-label::-webkit-scrollbar {
+  display: none;
+}
+
+body.eot-ios-app .steps-label span {
+  flex: 0 0 auto;
+  font-size: 10px !important;
+  letter-spacing: .06em;
+  color: #7b8983;
+}
+
+body.eot-ios-app .screen {
+  padding: 18px 16px 96px !important;
+  min-height: auto !important;
+}
+
+body.eot-ios-app h1 {
+  font-size: clamp(38px, 12.5vw, 58px) !important;
+  line-height: .95 !important;
+  letter-spacing: -.06em;
+  margin-bottom: 18px !important;
+}
+
+body.eot-ios-app h2 {
+  font-size: clamp(26px, 8vw, 38px) !important;
+  line-height: 1.02 !important;
+  letter-spacing: -.045em;
+  margin-bottom: 12px !important;
+}
+
+body.eot-ios-app h3 {
+  font-size: 19px !important;
+  margin-bottom: 14px !important;
+}
+
+body.eot-ios-app .lead {
+  font-size: 16px !important;
+  line-height: 1.45 !important;
+}
+
+body.eot-ios-app .hero-card {
+  min-height: calc(100dvh - 182px) !important;
+  border-radius: 30px !important;
+  padding: 28px 22px !important;
+  box-shadow: 0 18px 44px rgba(7, 17, 14, .16);
+}
+
+body.eot-ios-app .info-grid,
+body.eot-ios-app .controls,
+body.eot-ios-app .controls.dense,
+body.eot-ios-app .price-grid,
+body.eot-ios-app .price-grid.two,
+body.eot-ios-app .summary-grid,
+body.eot-ios-app .metric-row,
+body.eot-ios-app .report-car-strip {
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+
+body.eot-ios-app .info-grid {
+  margin-top: 24px !important;
+}
+
+body.eot-ios-app .info-grid div,
+body.eot-ios-app .card,
+body.eot-ios-app .result-card,
+body.eot-ios-app .metric,
+body.eot-ios-app .mini-car-card {
+  border-radius: 22px !important;
+}
+
+body.eot-ios-app .card,
+body.eot-ios-app .result-card {
+  padding: 18px !important;
+  background: #fff !important;
+  box-shadow: 0 12px 36px rgba(26, 44, 36, .07) !important;
+}
+
+body.eot-ios-app .card.soft {
+  background: #fff !important;
+}
+
+body.eot-ios-app button,
+body.eot-ios-app .button {
+  min-height: 48px !important;
+  border-radius: 16px !important;
+  padding: 13px 16px !important;
+  font-weight: 900 !important;
+}
+
+body.eot-ios-app .ghost {
+  background: #edf4f0 !important;
+  color: #11201a !important;
+}
+
+body.eot-ios-app .bottom-nav {
+  position: fixed !important;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 55;
+  display: flex;
+  gap: 12px !important;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom)) !important;
+  background: rgba(247, 250, 248, .97) !important;
+  border-top: 1px solid rgba(223, 231, 226, .95) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+body.eot-ios-app .bottom-nav button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+body.eot-ios-app .bottom-nav #prevStep {
+  flex: .78 1 0;
+}
+
+body.eot-ios-app .car-visual {
+  grid-template-columns: 1fr !important;
+  border-radius: 24px !important;
+  padding: 16px !important;
+  gap: 14px !important;
+  min-height: auto !important;
+}
+
+body.eot-ios-app .car-art {
+  height: 146px !important;
+  border-radius: 22px !important;
+}
+
+body.eot-ios-app .car-visual b {
+  font-size: 20px !important;
+}
+
+body.eot-ios-app .metric.main b {
+  font-size: 42px !important;
+}
+
+body.eot-ios-app .share-panel {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+}
+
+body.eot-ios-app .share-panel #downloadPdf,
+body.eot-ios-app .share-panel #copySummary {
+  width: 100% !important;
+  min-height: 52px !important;
+}
+
+body.eot-ios-app .explain,
+body.eot-ios-app .source-note {
+  border-radius: 18px !important;
+}
+
+body.eot-ios-app .car-lightbox {
+  padding: calc(18px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom)) !important;
+}
+
+body.eot-ios-app .car-lightbox img {
+  max-width: 94vw !important;
+  max-height: 78vh !important;
+  border-radius: 22px !important;
+}

@@ -114,6 +114,27 @@ function injectBefore(html, needle, snippet) {
   return html.replace(needle, `${snippet}\n${needle}`);
 }
 
+function patchAppJsForNativeBundle() {
+  const appPath = path.join(out, 'app.js');
+  if (!fs.existsSync(appPath)) return;
+  let js = fs.readFileSync(appPath, 'utf8');
+
+  const unsafeShareBind = "$('downloadPdf').onclick=downloadPdf;$('nativeShare').onclick=shareNative;$('btnShareTop').onclick=shareNative;$('copySummary').onclick=copySummary;";
+  const safeShareBind = "if($('downloadPdf'))$('downloadPdf').onclick=downloadPdf;if($('nativeShare'))$('nativeShare').onclick=shareNative;if($('btnShareTop'))$('btnShareTop').onclick=shareNative;if($('copySummary'))$('copySummary').onclick=copySummary;";
+  if (js.includes(unsafeShareBind)) {
+    js = js.replace(unsafeShareBind, safeShareBind);
+  }
+
+  const unsafeNavBind = "function bind(){$('prevStep').onclick=()=>setStep(currentStep-1);$('nextStep').onclick=()=>{if(currentStep===totalSteps-1)return setStep(0);if(canProceed())setStep(currentStep+1)};";
+  const safeNavBind = "function bind(){if($('prevStep'))$('prevStep').onclick=()=>setStep(currentStep-1);if($('nextStep'))$('nextStep').onclick=()=>{if(currentStep===totalSteps-1)return setStep(0);if(canProceed())setStep(currentStep+1)};";
+  if (js.includes(unsafeNavBind)) {
+    js = js.replace(unsafeNavBind, safeNavBind);
+  }
+
+  fs.writeFileSync(appPath, js, 'utf8');
+  console.log('Patched app.js unsafe DOM bindings for native bundle');
+}
+
 function injectIosAppLayer() {
   const indexPath = path.join(out, 'index.html');
   if (!fs.existsSync(indexPath)) return;
@@ -129,31 +150,31 @@ function injectIosAppLayer() {
   html = injectBefore(
     html,
     '</head>',
-    '  <link rel="stylesheet" href="ios-app.css?v=ios-app-4">'
+    '  <link rel="stylesheet" href="ios-app.css?v=ios-app-5">'
   );
 
   html = injectBefore(
     html,
     '</head>',
-    '  <link rel="stylesheet" href="ios-native-polish.css?v=ios-native-2">'
+    '  <link rel="stylesheet" href="ios-native-polish.css?v=ios-native-3">'
   );
 
   html = injectBefore(
     html,
     '</body>',
-    '<script src="ios-app.js?v=ios-app-4"></script>'
+    '<script src="ios-app.js?v=ios-app-5"></script>'
   );
 
   html = injectBefore(
     html,
     '</body>',
-    '<script src="ios-native-polish.js?v=ios-native-2"></script>'
+    '<script src="ios-native-polish.js?v=ios-native-3"></script>'
   );
 
   html = injectBefore(
     html,
     '</body>',
-    '<script src="ios-functional-fixes.js?v=ios-functional-1"></script>'
+    '<script src="ios-functional-fixes.js?v=ios-functional-2"></script>'
   );
 
   html = html.replace('<html lang="it">', '<html lang="it" class="eot-ios-app">');
@@ -171,6 +192,7 @@ fs.mkdirSync(out, { recursive: true });
 files.forEach(copyFileSafe);
 dirs.forEach(copyDirSafe);
 vendorFiles.forEach((file) => copyExternalFileSafe(file.src, file.dest));
+patchAppJsForNativeBundle();
 injectIosAppLayer();
 
 const requiredFiles = ['index.html', 'app.js', 'styles.css', 'ios-app.css', 'ios-app.js', 'ios-native-polish.css', 'ios-native-polish.js', 'ios-functional-fixes.js'];

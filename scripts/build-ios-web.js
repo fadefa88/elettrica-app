@@ -25,6 +25,8 @@ const files = [
   'ios-native-polish.css',
   'ios-native-polish.js',
   'ios-functional-fixes.js',
+  'ios-final-overrides.css',
+  'ios-final-fixes.js',
   'robots.txt',
   'sitemap.xml',
   'manifest.webmanifest',
@@ -150,31 +152,43 @@ function injectIosAppLayer() {
   html = injectBefore(
     html,
     '</head>',
-    '  <link rel="stylesheet" href="ios-app.css?v=ios-app-5">'
+    '  <link rel="stylesheet" href="ios-app.css?v=ios-app-6">'
   );
 
   html = injectBefore(
     html,
     '</head>',
-    '  <link rel="stylesheet" href="ios-native-polish.css?v=ios-native-3">'
+    '  <link rel="stylesheet" href="ios-native-polish.css?v=ios-native-4">'
+  );
+
+  html = injectBefore(
+    html,
+    '</head>',
+    '  <link rel="stylesheet" href="ios-final-overrides.css?v=ios-final-1">'
   );
 
   html = injectBefore(
     html,
     '</body>',
-    '<script src="ios-app.js?v=ios-app-5"></script>'
+    '<script src="ios-app.js?v=ios-app-6"></script>'
   );
 
   html = injectBefore(
     html,
     '</body>',
-    '<script src="ios-native-polish.js?v=ios-native-3"></script>'
+    '<script src="ios-native-polish.js?v=ios-native-4"></script>'
   );
 
   html = injectBefore(
     html,
     '</body>',
-    '<script src="ios-functional-fixes.js?v=ios-functional-2"></script>'
+    '<script src="ios-functional-fixes.js?v=ios-functional-3"></script>'
+  );
+
+  html = injectBefore(
+    html,
+    '</body>',
+    '<script src="ios-final-fixes.js?v=ios-final-1"></script>'
   );
 
   html = html.replace('<html lang="it">', '<html lang="it" class="eot-ios-app">');
@@ -183,7 +197,7 @@ function injectIosAppLayer() {
   // In the native app the cookie banner, web footer and web social links are not useful.
   // CSS hides them before the JavaScript app layer runs, avoiding a visible flash.
   fs.writeFileSync(indexPath, html, 'utf8');
-  console.log('Injected iOS app stylesheet, script, native polish layer and functional fixes');
+  console.log('Injected final iOS app layer');
 }
 
 fs.rmSync(out, { recursive: true, force: true });
@@ -195,7 +209,7 @@ vendorFiles.forEach((file) => copyExternalFileSafe(file.src, file.dest));
 patchAppJsForNativeBundle();
 injectIosAppLayer();
 
-const requiredFiles = ['index.html', 'app.js', 'styles.css', 'ios-app.css', 'ios-app.js', 'ios-native-polish.css', 'ios-native-polish.js', 'ios-functional-fixes.js'];
+const requiredFiles = ['index.html', 'app.js', 'styles.css', 'ios-app.css', 'ios-app.js', 'ios-native-polish.css', 'ios-native-polish.js', 'ios-functional-fixes.js', 'ios-final-overrides.css', 'ios-final-fixes.js'];
 const missing = requiredFiles.filter((file) => !fs.existsSync(path.join(out, file)));
 if (missing.length) {
   console.error(`Missing required iOS web files: ${missing.join(', ')}`);

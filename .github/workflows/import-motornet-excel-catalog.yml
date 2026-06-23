@@ -1,0 +1,72 @@
+name: Import cleaned Motornet Excel catalog
+
+on:
+  workflow_dispatch:
+    inputs:
+      excel_path:
+        description: 'Path del file Excel pulito nel repo'
+        required: true
+        default: 'reports/motornet-quality/motornet_catalog_audit.xlsx'
+      base_json:
+        description: 'JSON catalogo da usare come base'
+        required: true
+        default: 'data/cars_motornet.json'
+      output_json:
+        description: 'JSON da sovrascrivere'
+        required: true
+        default: 'data/cars_motornet.json'
+      commit_message:
+        description: 'Messaggio commit'
+        required: true
+        default: 'Import cleaned Motornet Excel catalog'
+
+permissions:
+  contents: write
+
+jobs:
+  import-excel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; else pip install openpyxl; fi
+
+      - name: Verify input files
+        run: |
+          test -f "${{ inputs.excel_path }}" || (echo "Excel not found: ${{ inputs.excel_path }}" && exit 1)
+          test -f "${{ inputs.base_json }}" || (echo "Base JSON not found: ${{ inputs.base_json }}" && exit 1)
+
+      - name: Convert Excel to JSON catalog
+        run: |
+          python scripts/motornet_excel_to_json.py \
+            --excel "${{ inputs.excel_path }}" \
+            --base-json "${{ inputs.base_json }}" \
+            --out "${{ inputs.output_json }}"
+
+      - name: Run audit after import
+        run: |
+          python scripts/audit_motornet_quality.py \
+            --catalog "${{ inputs.output_json }}" \
+            --out-dir reports/motornet-quality-after-import
+
+      - name: Commit updated catalog
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add "${{ inputs.output_json }}" reports/motornet-quality-after-import
+          if git diff --cached --quiet; then
+            echo "No catalog changes to commit."
+            exit 0
+          fi
+          git commit -m "${{ inputs.commit_message }}"
+          git pull --rebase origin "${GITHUB_REF_NAME}" || true
+          git push

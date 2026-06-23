@@ -1,0 +1,170 @@
+name: Process assets/cars images
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Rigenera anche immagini già create"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      limit:
+        description: "Numero massimo immagini da ispezionare/processare. 0 = tutte"
+        required: false
+        default: 0
+        type: string
+      final_quality:
+        description: "Qualità WEBP finale. Consigliato 70-85"
+        required: false
+        default: 80
+        type: string
+      final_max_side:
+        description: "Lato massimo immagine finale in px. 0 = nessun resize"
+        required: false
+        default: 1600
+        type: string
+      mirror:
+        description: "Specchia orizzontalmente la macchina"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: process-assets-cars-images
+  cancel-in-progress: false
+
+jobs:
+  process-images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache model
+        uses: actions/cache@v4
+        with:
+          path: ~/.u2net
+          key: rembg-u2net-v1
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pillow rembg onnxruntime
+
+      - name: Resolve inputs
+        id: vars
+        shell: bash
+        env:
+          LIMIT_INPUT: ${{ inputs.limit }}
+          FORCE_INPUT: ${{ inputs.force }}
+          FINAL_QUALITY_INPUT: ${{ inputs.final_quality }}
+          FINAL_MAX_SIDE_INPUT: ${{ inputs.final_max_side }}
+          MIRROR_INPUT: ${{ inputs.mirror }}
+        run: |
+          INPUT_DIR="assets/cars"
+          OUTPUT_DIR="assets/cars_processed"
+          LIMIT="${LIMIT_INPUT:-0}"
+          FORCE="${FORCE_INPUT:-false}"
+          FINAL_QUALITY="${FINAL_QUALITY_INPUT:-80}"
+          FINAL_MAX_SIDE="${FINAL_MAX_SIDE_INPUT:-1600}"
+          MIRROR="${MIRROR_INPUT:-true}"
+
+          if [[ ! "$LIMIT" =~ ^[0-9]+$ ]]; then
+            echo "Invalid limit: $LIMIT. Use 0 or a positive integer."
+            exit 1
+          fi
+
+          if [[ "$FORCE" != "true" && "$FORCE" != "false" ]]; then
+            echo "Invalid force: $FORCE. Use true or false."
+            exit 1
+          fi
+
+          if [[ "$MIRROR" != "true" && "$MIRROR" != "false" ]]; then
+            echo "Invalid mirror: $MIRROR. Use true or false."
+            exit 1
+          fi
+
+          if [[ ! "$FINAL_QUALITY" =~ ^[0-9]+$ ]] || [ "$FINAL_QUALITY" -lt 1 ] || [ "$FINAL_QUALITY" -gt 100 ]; then
+            echo "Invalid final_quality: $FINAL_QUALITY. Use an integer from 1 to 100."
+            exit 1
+          fi
+
+          if [[ ! "$FINAL_MAX_SIDE" =~ ^[0-9]+$ ]]; then
+            echo "Invalid final_max_side: $FINAL_MAX_SIDE. Use 0 or a positive integer."
+            exit 1
+          fi
+
+          echo "limit=$LIMIT"
+          echo "force=$FORCE"
+          echo "mirror=$MIRROR"
+          echo "input_dir=$INPUT_DIR"
+          echo "output_dir=$OUTPUT_DIR"
+          echo "final_quality=$FINAL_QUALITY"
+          echo "final_max_side=$FINAL_MAX_SIDE"
+
+          {
+            echo "limit=$LIMIT"
+            echo "force=$FORCE"
+            echo "mirror=$MIRROR"
+            echo "input_dir=$INPUT_DIR"
+            echo "output_dir=$OUTPUT_DIR"
+            echo "final_quality=$FINAL_QUALITY"
+            echo "final_max_side=$FINAL_MAX_SIDE"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Process images
+        run: |
+          python scripts/process_assets_cars_images.py \
+            --input-dir "${{ steps.vars.outputs.input_dir }}" \
+            --output-dir "${{ steps.vars.outputs.output_dir }}" \
+            --background "assets/sfondopippo.jpg" \
+            --logo "assets/logopippo.png" \
+            --force "${{ steps.vars.outputs.force }}" \
+            --mirror "${{ steps.vars.outputs.mirror }}" \
+            --limit "${{ steps.vars.outputs.limit }}" \
+            --final-quality "${{ steps.vars.outputs.final_quality }}" \
+            --final-max-side "${{ steps.vars.outputs.final_max_side }}"
+
+      - name: Commit generated images if any
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add "${{ steps.vars.outputs.output_dir }}"
+
+          if git diff --cached --quiet; then
+            echo "No processed assets/cars images to commit."
+            exit 0
+          fi
+
+          git commit -m "Process assets/cars images"
+
+          for attempt in 1 2 3; do
+            echo "Push attempt $attempt"
+            git pull --rebase origin main
+            if git push origin HEAD:main; then
+              echo "Push completed."
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Push failed after retries."
+          exit 1

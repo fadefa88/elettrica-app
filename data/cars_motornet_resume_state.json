@@ -1,0 +1,8 @@
+{
+  "schema": "cars_motornet_resume_state_v1",
+  "last_completed_brand_code": "ZEE",
+  "last_completed_brand_url": "https://www.motornet.it/auto/scheda-modello/ZEE",
+  "cars_count_at_completion": 5668,
+  "requests_count_at_completion": 32,
+  "updated_at": "2026-06-18T07:19:45+00:00"
+}

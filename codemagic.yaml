@@ -1,0 +1,83 @@
+workflows:
+  ios-capacitor-testflight:
+    name: iOS Capacitor - TestFlight
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+
+    # In Codemagic, this must match the App Store Connect API key integration name exactly.
+    integrations:
+      app_store_connect: "Luca De Fassi"
+
+    environment:
+      node: 20
+      # Apple now requires App Store uploads to be built with the iOS 26 SDK.
+      # Xcode 26 includes the iOS 26 SDK; Xcode 16.x builds are rejected by App Store Connect.
+      xcode: 26.4
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: it.elettricaotermica.app
+      vars:
+        BUNDLE_ID: it.elettricaotermica.app
+        XCODE_WORKSPACE: ios/App/App.xcworkspace
+        XCODE_SCHEME: App
+        APP_VERSION: 1.0.0
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+
+    cache:
+      cache_paths:
+        - $CM_BUILD_DIR/node_modules
+        - $HOME/.npm
+        - $HOME/Library/Caches/CocoaPods
+        - $HOME/.cocoapods
+
+    scripts:
+      - name: Install npm dependencies
+        script: |
+          npm install
+
+      - name: Build static web bundle for Capacitor
+        script: |
+          npm run build:ios-web
+
+      - name: Add iOS platform if missing
+        script: |
+          if [ ! -d ios ]; then
+            npx cap add ios
+          fi
+
+      - name: Sync Capacitor iOS project
+        script: |
+          npx cap sync ios
+
+      - name: Set app version and build number
+        script: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $APP_VERSION" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" ios/App/App/Info.plist || true
+
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+
+      - name: Build IPA for App Store Connect
+        script: |
+          cd ios/App
+          xcode-project build-ipa --workspace "$CM_BUILD_DIR/$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - ios/App/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false
+        submit_to_app_store: false

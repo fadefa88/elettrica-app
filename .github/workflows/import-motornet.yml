@@ -1,0 +1,170 @@
+name: Import Motornet catalogue
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Numero massimo di nuove auto da importare. Usa 0 per nessun limite'
+        required: false
+        default: '0'
+      brand_codes:
+        description: 'Test su marche specifiche, es. ABA,ROL. Vuoto = tutte'
+        required: false
+        default: ''
+      delay:
+        description: 'Secondi tra pagine Motornet'
+        required: false
+        default: '4'
+      download_images:
+        description: 'Scarica immagini Motornet nel repo'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      remove_missing:
+        description: 'Rimuovi dal catalogo le auto non più presenti nel listino Motornet. Attivo solo su scansione completa'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      allow_large_removal:
+        description: 'Permetti rimozioni massive oltre la soglia di sicurezza'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      max_removal_ratio:
+        description: 'Soglia massima rimozioni sul catalogo esistente, es. 0.25 = 25%'
+        required: false
+        default: '0.25'
+      min_active_links:
+        description: 'Numero minimo link attivi richiesti prima di modificare il catalogo'
+        required: false
+        default: '100'
+  schedule:
+    - cron: '23 4 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: motornet-catalogue-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  import-motornet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Daily sync Motornet catalogue
+        env:
+          LIMIT: ${{ github.event.inputs.limit || '0' }}
+          BRAND_CODES: ${{ github.event.inputs.brand_codes || '' }}
+          DELAY: ${{ github.event.inputs.delay || '4' }}
+          DOWNLOAD_IMAGES: ${{ github.event.inputs.download_images || 'true' }}
+          REMOVE_MISSING: ${{ github.event.inputs.remove_missing || 'true' }}
+          ALLOW_LARGE_REMOVAL: ${{ github.event.inputs.allow_large_removal || 'false' }}
+          MAX_REMOVAL_RATIO: ${{ github.event.inputs.max_removal_ratio || '0.25' }}
+          MIN_ACTIVE_LINKS: ${{ github.event.inputs.min_active_links || '100' }}
+        run: |
+          python scripts/sync_motornet_catalog.py \
+            --new-limit "$LIMIT" \
+            --brand-codes "$BRAND_CODES" \
+            --delay "$DELAY" \
+            --download-images "$DOWNLOAD_IMAGES" \
+            --remove-missing "$REMOVE_MISSING" \
+            --allow-large-removal "$ALLOW_LARGE_REMOVAL" \
+            --max-removal-ratio "$MAX_REMOVAL_RATIO" \
+            --min-active-links "$MIN_ACTIVE_LINKS" \
+            --image-dir "assets/cars/motornet"
+
+      - name: Validate generated catalogue
+        run: |
+          test -f data/cars_motornet.json
+          python -m json.tool data/cars_motornet.json > /dev/null
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('data/cars_motornet.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          cars = data.get('cars') or []
+          ev = [c for c in cars if c.get('category') == 'electric']
+          ice = [c for c in cars if c.get('category') != 'electric']
+          sync = data.get('sync') or {}
+          print(f"Motornet JSON generated: status={data.get('status')} cars={len(cars)} electric={len(ev)} thermal={len(ice)}")
+          print(f"Sync: active_urls={sync.get('active_urls')} new_added={sync.get('new_added')} removed={sync.get('removed_missing_from_motornet')}")
+          print(f"File size before postprocess/slim: {p.stat().st_size} bytes")
+          PY
+
+      - name: Postprocess and slim Motornet catalogue
+        run: |
+          python scripts/postprocess_motornet_catalog.py
+          python scripts/derive_ev_battery_fields.py
+          python scripts/slim_motornet_catalog.py --input data/cars_motornet.json --out data/cars_motornet.json
+          python scripts/normalize_motornet_image_urls.py --catalog data/cars_motornet.json --image-prefix assets/cars/motornet
+          python -m json.tool data/cars_motornet.json > /dev/null
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('data/cars_motornet.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          print(f"Slim catalog cars={len(data.get('cars') or [])} size={p.stat().st_size} bytes")
+          PY
+
+      - name: Commit imported catalogue
+        run: |
+          set -e
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          mkdir -p assets/cars/motornet
+          git add data/cars_motornet.json assets/cars/motornet
+          if git diff --cached --quiet; then
+            echo "No Motornet catalogue changes to commit."
+            exit 0
+          fi
+          git commit -m "Sync Motornet catalogue"
+          for attempt in 1 2 3; do
+            echo "Push attempt $attempt"
+            if git pull --rebase --autostash origin main && git push; then
+              echo "Motornet catalogue committed and pushed."
+              exit 0
+            fi
+            git rebase --abort || true
+            sleep 5
+          done
+          echo "Unable to push Motornet catalogue after retries."
+          exit 1
+
+      - name: Upload Motornet catalogue artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: motornet-catalogue
+          path: |
+            data/cars_motornet.json
+            assets/cars/motornet
+          if-no-files-found: warn

@@ -1,0 +1,64 @@
+name: Update public charging prices
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Daily best-effort public charging price refresh.
+    - cron: "47 6 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-public-charging-prices
+  cancel-in-progress: true
+
+jobs:
+  update-charging-prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Update public charging prices
+        run: python scripts/update_charging_prices.py --out data/charging.json
+
+      - name: Validate charging JSON
+        run: python -m json.tool data/charging.json > /dev/null
+
+      - name: Commit charging prices if changed
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add data/charging.json
+          if git diff --cached --quiet; then
+            echo "No charging price changes to commit."
+            exit 0
+          fi
+          git commit -m "Update public charging prices"
+          for attempt in 1 2 3; do
+            echo "Push attempt $attempt"
+            git pull --rebase origin main
+            if git push origin HEAD:main; then
+              echo "Push completed."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Push failed after retries."
+          exit 1

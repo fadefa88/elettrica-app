@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Disallow: /.github/
+Disallow: /scripts/
+Disallow: /reports/
+Disallow: /data/cars_motornet_resume_state.json
+Disallow: /data_cars_motornet_initial.json
+
+Sitemap: https://elettricaotermica.it/sitemap.xml

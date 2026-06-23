@@ -1,0 +1,130 @@
+name: Audit Motornet catalog quality
+
+on:
+  workflow_dispatch:
+    inputs:
+      catalog_path:
+        description: "Catalog JSON path"
+        required: true
+        default: "data/cars_motornet.json"
+      fail_on_issues:
+        description: "Fail workflow if anomalies are found"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      ev_consumption_min:
+        description: "EV min kWh/100 km"
+        required: true
+        default: "7"
+      ev_consumption_max:
+        description: "EV max kWh/100 km"
+        required: true
+        default: "40"
+      ev_battery_min:
+        description: "EV min battery kWh"
+        required: true
+        default: "5"
+      ev_battery_max:
+        description: "EV max battery kWh"
+        required: true
+        default: "250"
+      ev_range_min:
+        description: "EV min WLTP range km"
+        required: true
+        default: "30"
+      ev_range_max:
+        description: "EV max WLTP range km"
+        required: true
+        default: "1000"
+      thermal_consumption_l_min:
+        description: "Thermal min l/100 km"
+        required: true
+        default: "1"
+      thermal_consumption_l_max:
+        description: "Thermal max l/100 km"
+        required: true
+        default: "30"
+      thermal_consumption_kg_min:
+        description: "Methane min kg/100 km"
+        required: true
+        default: "1"
+      thermal_consumption_kg_max:
+        description: "Methane max kg/100 km"
+        required: true
+        default: "15"
+      emissions_min:
+        description: "Thermal min CO2 g/km"
+        required: true
+        default: "1"
+      emissions_max:
+        description: "Thermal max CO2 g/km"
+        required: true
+        default: "500"
+
+permissions:
+  contents: read
+
+env:
+  REPORT_DIR: reports/motornet-quality
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run catalog quality audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          FAIL_FLAG=""
+          if [ "${{ github.event.inputs.fail_on_issues }}" = "true" ]; then
+            FAIL_FLAG="--fail-on-issues"
+          fi
+
+          python scripts/audit_motornet_quality.py \
+            --catalog "${{ github.event.inputs.catalog_path }}" \
+            --out-dir "$REPORT_DIR" \
+            --ev-consumption-min "${{ github.event.inputs.ev_consumption_min }}" \
+            --ev-consumption-max "${{ github.event.inputs.ev_consumption_max }}" \
+            --ev-battery-min "${{ github.event.inputs.ev_battery_min }}" \
+            --ev-battery-max "${{ github.event.inputs.ev_battery_max }}" \
+            --ev-range-min "${{ github.event.inputs.ev_range_min }}" \
+            --ev-range-max "${{ github.event.inputs.ev_range_max }}" \
+            --thermal-consumption-l-min "${{ github.event.inputs.thermal_consumption_l_min }}" \
+            --thermal-consumption-l-max "${{ github.event.inputs.thermal_consumption_l_max }}" \
+            --thermal-consumption-kg-min "${{ github.event.inputs.thermal_consumption_kg_min }}" \
+            --thermal-consumption-kg-max "${{ github.event.inputs.thermal_consumption_kg_max }}" \
+            --emissions-min "${{ github.event.inputs.emissions_min }}" \
+            --emissions-max "${{ github.event.inputs.emissions_max }}" \
+            $FAIL_FLAG
+
+      - name: Print Markdown report
+        if: always()
+        shell: bash
+        run: |
+          if [ -f "$REPORT_DIR/quality_report.md" ]; then
+            cat "$REPORT_DIR/quality_report.md"
+          fi
+
+      - name: Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: motornet-quality-report
+          path: reports/motornet-quality/

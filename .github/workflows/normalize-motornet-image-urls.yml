@@ -1,0 +1,74 @@
+name: Normalize Motornet image URLs
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/normalize-motornet-image-urls.yml'
+      - 'scripts/normalize_motornet_image_urls.py'
+      - 'scripts/rename_motornet_processed_images.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: normalize-motornet-image-urls-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Normalize current Motornet image URLs
+        run: |
+          python scripts/normalize_motornet_image_urls.py \
+            --catalog data/cars_motornet.json \
+            --image-prefix assets/cars/motornet
+          python -m json.tool data/cars_motornet.json > /dev/null
+
+      - name: Rename processed final Motornet images
+        run: |
+          if [ -d assets/cars/motornet_processed/final ]; then
+            python scripts/rename_motornet_processed_images.py \
+              --catalog data/cars_motornet.json \
+              --image-dir assets/cars/motornet_processed/final
+          else
+            echo "assets/cars/motornet_processed/final does not exist; skipping."
+          fi
+
+      - name: Commit normalized catalogue and processed images
+        run: |
+          set -e
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add data/cars_motornet.json assets/cars/motornet_processed/final || true
+          if git diff --cached --quiet; then
+            echo "No Motornet image URL or processed image rename changes to commit."
+            exit 0
+          fi
+          git commit -m "Normalize Motornet image names"
+          for attempt in 1 2 3; do
+            echo "Push attempt $attempt"
+            if git pull --rebase --autostash origin main && git push; then
+              echo "Motornet image names committed and pushed."
+              exit 0
+            fi
+            git rebase --abort || true
+            sleep 5
+          done
+          echo "Unable to push Motornet image name changes after retries."
+          exit 1

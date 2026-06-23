@@ -1,0 +1,29 @@
+{
+  "updated_at": "2026-06-23T10:03:27.414739+00:00",
+  "status": "updated_mimit_csv_daily",
+  "fuel": {
+    "benzina": 1.841,
+    "gasolio": 1.964,
+    "gpl": 0.778,
+    "metano": 1.562,
+    "units": {
+      "benzina": "eur_l",
+      "gasolio": "eur_l",
+      "gpl": "eur_l",
+      "metano": "eur_kg"
+    },
+    "source": "https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv",
+    "frequency": "daily_csv_raw",
+    "samples": {
+      "benzina": 20637,
+      "gasolio": 25790,
+      "gpl": 4714,
+      "metano": 1591
+    },
+    "average_method": "raw_station_mean"
+  },
+  "electricity": {
+    "home": 0.3,
+    "solar": 0.08
+  }
+}

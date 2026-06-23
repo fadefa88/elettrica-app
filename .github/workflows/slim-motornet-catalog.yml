@@ -1,0 +1,67 @@
+name: Slim Motornet Catalog
+
+on:
+  workflow_dispatch:
+    inputs:
+      input_json:
+        description: "Input catalog JSON"
+        required: true
+        default: "data/cars_motornet.json"
+      output_json:
+        description: "Output catalog JSON"
+        required: true
+        default: "data/cars_motornet.json"
+      commit_message:
+        description: "Commit message"
+        required: true
+        default: "Slim Motornet catalog"
+
+permissions:
+  contents: write
+
+jobs:
+  slim:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Slim catalog
+        run: |
+          python scripts/slim_motornet_catalog.py \
+            --input "${{ github.event.inputs.input_json }}" \
+            --out "${{ github.event.inputs.output_json }}"
+
+      - name: Show catalog size after slimming
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("${{ github.event.inputs.output_json }}")
+          payload = json.loads(p.read_text(encoding="utf-8"))
+          print(f"Output: {p}")
+          print(f"Cars: {len(payload.get('cars', []))}")
+          print(f"Size bytes: {p.stat().st_size}")
+          if payload.get('cars'):
+              print("Sample keys:", sorted(payload['cars'][0].keys()))
+          PY
+
+      - name: Commit slim catalog
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add "${{ github.event.inputs.output_json }}"
+          if git diff --cached --quiet; then
+            echo "No slim catalog changes to commit."
+            exit 0
+          fi
+          git commit -m "${{ github.event.inputs.commit_message }}"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

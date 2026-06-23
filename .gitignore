@@ -1,0 +1,37 @@
+# Node / Capacitor
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Generated web bundle
+www/
+
+# Native projects generated locally or by CI
+# Commit ios/ only after you have generated and verified it intentionally.
+ios/
+android/
+
+# Xcode
+DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcuserdatad/
+
+# macOS
+.DS_Store
+
+# Secrets / signing
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+*.certSigningRequest
+.env
+.env.*
+
+# Archives
+*.ipa
+*.xcarchive

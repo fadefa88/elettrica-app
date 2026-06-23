@@ -1,0 +1,52 @@
+name: Update dynamic vehicle cost data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-vehicle-cost-data
+  cancel-in-progress: true
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Update Italian fuel prices
+        run: python scripts/update_data.py
+      - name: Commit changes if any
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add data/prices.json
+          if git diff --cached --quiet; then
+            echo "No fuel price changes to commit."
+            exit 0
+          fi
+          git commit -m "Update Italian fuel prices"
+          for attempt in 1 2 3; do
+            echo "Push attempt $attempt"
+            git pull --rebase origin main
+            if git push origin HEAD:main; then
+              echo "Push completed."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Push failed after retries."
+          exit 1

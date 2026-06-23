@@ -1,0 +1,54 @@
+name: Postprocess Motornet catalogue
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  postprocess-motornet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Postprocess Motornet catalogue
+        run: |
+          test -f data/cars_motornet.json
+          python scripts/postprocess_motornet_catalog.py
+          python scripts/derive_ev_battery_fields.py
+          python -m json.tool data/cars_motornet.json > /dev/null
+
+      - name: Commit postprocessed catalogue
+        run: |
+          set -e
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add data/cars_motornet.json
+          if git diff --cached --quiet; then
+            echo "No Motornet postprocess changes to commit."
+            exit 0
+          fi
+          git commit -m "Postprocess Motornet catalogue"
+          for attempt in 1 2 3; do
+            echo "Push attempt $attempt"
+            if git pull --rebase --autostash origin main && git push; then
+              echo "Motornet catalogue postprocessed and pushed."
+              exit 0
+            fi
+            git rebase --abort || true
+            sleep 5
+          done
+          echo "Unable to push Motornet postprocess changes after retries."
+          exit 1

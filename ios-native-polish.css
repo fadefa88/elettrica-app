@@ -22,7 +22,6 @@ body.eot-ios-app * {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Remove residual web/SEO furniture from the app experience. */
 body.eot-ios-app .seo-content,
 body.eot-ios-app .resources,
 body.eot-ios-app .resource-list,
@@ -39,7 +38,11 @@ body.eot-ios-app a[href*="whatsapp"] {
   display: none !important;
 }
 
-/* More native top bar: compact, stable, no web-menu feeling. */
+body.eot-ios-app #btnShareTop,
+body.eot-ios-app #nativeShare {
+  display: none !important;
+}
+
 body.eot-ios-app .app-top {
   min-height: calc(58px + env(safe-area-inset-top));
   padding-left: 14px !important;
@@ -57,25 +60,46 @@ body.eot-ios-app .brand b {
   max-width: calc(100vw - 76px) !important;
 }
 
-/* App landing: decision utility, not marketing page. */
 body.eot-ios-app [data-step="0"] .hero-card {
   display: flex !important;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: calc(100dvh - 210px) !important;
+  justify-content: flex-start;
+  gap: 18px;
+  min-height: auto !important;
+  color: #101817 !important;
 }
 
 body.eot-ios-app [data-step="0"] h1 {
-  max-width: 8ch;
+  max-width: 9ch;
+  color: #101817 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #101817 !important;
+  background: none !important;
 }
 
 body.eot-ios-app [data-step="0"] .lead {
-  margin-bottom: 22px !important;
+  margin-bottom: 8px !important;
+  color: #34433d !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #34433d !important;
+}
+
+body.eot-ios-app [data-step="0"] .info-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+  margin-top: 6px !important;
 }
 
 body.eot-ios-app [data-step="0"] .info-grid div {
   position: relative;
   overflow: hidden;
+  display: grid !important;
+  grid-template-columns: 38px 1fr !important;
+  grid-template-rows: auto auto !important;
+  gap: 4px 12px !important;
+  align-items: center !important;
+  color: #101817 !important;
 }
 
 body.eot-ios-app [data-step="0"] .info-grid div::after {
@@ -87,9 +111,27 @@ body.eot-ios-app [data-step="0"] .info-grid div::after {
   height: 86px;
   border-radius: 999px;
   background: rgba(15, 159, 99, .08);
+  pointer-events: none;
 }
 
-/* Screens as iOS cards. */
+body.eot-ios-app [data-step="0"] .info-grid .ios-step-dot {
+  grid-row: 1 / span 2;
+  z-index: 1;
+}
+
+body.eot-ios-app [data-step="0"] .info-grid b,
+body.eot-ios-app [data-step="0"] .info-grid span:not(.ios-step-dot) {
+  z-index: 1;
+  color: #101817 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+body.eot-ios-app [data-step="0"] .info-grid span:not(.ios-step-dot) {
+  color: #66746f !important;
+  line-height: 1.35;
+}
+
 body.eot-ios-app .screen:not([data-step="0"]) {
   padding-top: 16px !important;
 }
@@ -106,6 +148,9 @@ body.eot-ios-app .result-card + .card {
 
 body.eot-ios-app h2 {
   max-width: 12ch;
+  color: #101817 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #101817 !important;
 }
 
 body.eot-ios-app .card h2,
@@ -115,7 +160,6 @@ body.eot-ios-app .result-card h3 {
   margin-bottom: 10px !important;
 }
 
-/* Controls: native feel and prevent accidental tiny tap targets. */
 body.eot-ios-app .choice,
 body.eot-ios-app .manual-choice,
 body.eot-ios-app .toggle,
@@ -142,7 +186,40 @@ body.eot-ios-app select {
   background-repeat: no-repeat !important;
 }
 
-/* Result: make the final answer obvious. */
+body.eot-ios-app .motornet-smart-model-label,
+body.eot-ios-app .motornet-trim-label {
+  color: #22342d !important;
+}
+
+body.eot-ios-app .motornet-autocomplete-results {
+  z-index: 120 !important;
+  background: #ffffff !important;
+  color: #101817 !important;
+  border-radius: 18px !important;
+}
+
+body.eot-ios-app .motornet-autocomplete-item {
+  min-height: 58px !important;
+  color: #101817 !important;
+}
+
+body.eot-ios-app .motornet-autocomplete-item span {
+  color: #66746f !important;
+  opacity: 1 !important;
+}
+
+body.eot-ios-app .car-visual.empty,
+body.eot-ios-app .car-visual {
+  color: #101817 !important;
+  opacity: 1 !important;
+}
+
+body.eot-ios-app .car-visual span,
+body.eot-ios-app .car-visual small {
+  color: #66746f !important;
+  opacity: 1 !important;
+}
+
 body.eot-ios-app .result-card {
   border-radius: var(--ios-radius-xl) !important;
   background: #ffffff !important;
@@ -182,7 +259,6 @@ body.eot-ios-app .highlight {
   border-color: rgba(15, 159, 99, .22) !important;
 }
 
-/* Native action area: report + copy. */
 body.eot-ios-app .share-panel {
   position: sticky;
   bottom: calc(82px + env(safe-area-inset-bottom));
@@ -196,11 +272,6 @@ body.eot-ios-app .share-panel {
   -webkit-backdrop-filter: blur(18px) saturate(1.12);
 }
 
-body.eot-ios-app #downloadPdf::after {
-  content: "";
-}
-
-/* Bottom navigation closer to iOS tab/footer controls. */
 body.eot-ios-app .bottom-nav {
   box-shadow: 0 -10px 24px rgba(16, 32, 26, .06);
 }
@@ -214,7 +285,6 @@ body.eot-ios-app .bottom-nav #prevStep:disabled {
   pointer-events: none;
 }
 
-/* Reduce web-like long paragraphs. */
 body.eot-ios-app .explain,
 body.eot-ios-app #explainBox {
   font-size: 15px !important;
@@ -229,9 +299,83 @@ body.eot-ios-app .app-note {
   line-height: 1.35;
 }
 
-/* Keyboard and safe-area spacing. */
 body.eot-ios-app .screen:last-of-type {
   padding-bottom: calc(122px + env(safe-area-inset-bottom)) !important;
+}
+
+body.eot-ios-app .cg-entry {
+  margin-top: 4px !important;
+  padding: 18px !important;
+  border-radius: 24px !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(205, 218, 211, .88) !important;
+  box-shadow: 0 14px 34px rgba(16, 32, 26, .08) !important;
+  color: #101817 !important;
+}
+
+body.eot-ios-app .cg-entry h3 {
+  color: #101817 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #101817 !important;
+}
+
+body.eot-ios-app .cg-entry p {
+  color: #4d6058 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #4d6058 !important;
+  line-height: 1.42 !important;
+}
+
+body.eot-ios-app .cg-actions {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+}
+
+body.eot-ios-app .cg-actions button {
+  width: 100% !important;
+}
+
+body.eot-ios-app .cg-page {
+  background: #f5f7f6 !important;
+  color: #101817 !important;
+}
+
+body.eot-ios-app .cg-shell {
+  padding: calc(14px + env(safe-area-inset-top)) 14px calc(20px + env(safe-area-inset-bottom)) !important;
+}
+
+body.eot-ios-app .cg-body {
+  color: #101817 !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(205, 218, 211, .78) !important;
+  box-shadow: 0 14px 34px rgba(16, 32, 26, .08) !important;
+}
+
+body.eot-ios-app .cg-body h1,
+body.eot-ios-app .cg-body .lead,
+body.eot-ios-app .cg-body label,
+body.eot-ios-app .cg-muted {
+  color: #101817 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+body.eot-ios-app .cg-body .lead,
+body.eot-ios-app .cg-muted {
+  color: #4d6058 !important;
+}
+
+body.eot-ios-app .cg-card {
+  background: #ffffff !important;
+  color: #101817 !important;
+  border-color: rgba(205, 218, 211, .88) !important;
+}
+
+body.eot-ios-app .cg-card em,
+body.eot-ios-app .cg-card small {
+  color: #66746f !important;
+  opacity: 1 !important;
 }
 
 @media (max-width: 390px) {

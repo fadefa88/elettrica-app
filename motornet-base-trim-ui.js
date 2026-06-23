@@ -180,11 +180,17 @@
     anchor.parentNode.insertBefore(searchLabel, anchor.nextSibling);
     searchLabel.parentNode.insertBefore(trimLabel, searchLabel.nextSibling);
   }
+  function emitNativeChange(el){
+    if(!el) return;
+    try { el.dispatchEvent(new Event('input', {bubbles:true})); } catch(e) {}
+    try { el.dispatchEvent(new Event('change', {bubbles:true})); } catch(e) {}
+  }
   function setHiddenSelection(kind, carId){
     const hidden = byId(hiddenId(kind));
     if(!hidden) return;
     hidden.innerHTML = carId ? '<option value="'+esc(carId)+'" selected>'+esc(carId)+'</option>' : '<option value=""></option>';
     hidden.value = carId || '';
+    emitNativeChange(hidden);
   }
   function clearSelection(kind, keepInput, runCalc){
     const input = byId(inputId(kind));
@@ -305,7 +311,7 @@
     style.textContent = `
       .motornet-smart-model-label{position:relative;}
       .motornet-model-search{width:100%;}
-      .motornet-autocomplete-results{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:30;max-height:320px;overflow:auto;background:var(--card-bg,#fff);border:1px solid rgba(120,120,120,.25);border-radius:14px;box-shadow:0 18px 45px rgba(0,0,0,.18);padding:6px;}
+      .motornet-autocomplete-results{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:80;max-height:320px;overflow:auto;background:var(--card-bg,#fff);border:1px solid rgba(120,120,120,.25);border-radius:14px;box-shadow:0 18px 45px rgba(0,0,0,.18);padding:6px;}
       .motornet-autocomplete-item{width:100%;display:flex;flex-direction:column;gap:3px;text-align:left;background:transparent;border:0;border-radius:10px;padding:10px 12px;cursor:pointer;color:inherit;}
       .motornet-autocomplete-item:hover,.motornet-autocomplete-item:focus{background:rgba(120,120,120,.12);outline:none;}
       .motornet-autocomplete-item b{font-size:.95rem;line-height:1.2;}
@@ -337,7 +343,9 @@
         input.__motornetSmartBound = true;
       }
       if(trim && !trim.__motornetSmartBound){
-        trim.addEventListener('input', function(){ setHiddenSelection(kind, trim.value); runAfterSelection(); });
+        const onTrimPick = function(){ setHiddenSelection(kind, trim.value); runAfterSelection(); };
+        trim.addEventListener('input', onTrimPick);
+        trim.addEventListener('change', onTrimPick);
         trim.__motornetSmartBound = true;
       }
     });

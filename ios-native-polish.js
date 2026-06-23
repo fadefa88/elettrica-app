@@ -16,7 +16,6 @@
     const selectors = [
       '#cookieBanner', '.cookie-banner', '.cookie-consent',
       'footer', '.site-footer', '.app-footer',
-      '.top-actions', '#btnShareTop', '#nativeShare',
       '#shareWhatsapp', '#shareFacebook', '#shareX', '#shareLinkedin',
       '.social-share', '.social-row', '.web-share',
       'a[href*="facebook.com"]', 'a[href*="twitter.com"]', 'a[href*="x.com"]',
@@ -25,6 +24,13 @@
 
     selectors.forEach((selector) => {
       document.querySelectorAll(selector).forEach((node) => node.remove());
+    });
+
+    // Keep these elements in the DOM because app.js binds them after async catalog loading.
+    // They are hidden by CSS and not part of the app UX.
+    ['btnShareTop', 'nativeShare'].forEach((id) => {
+      const node = document.getElementById(id);
+      if (node) node.hidden = true;
     });
   }
 
@@ -54,7 +60,7 @@
       if (!item) return;
       const icon = card.querySelector('i, .ios-step-dot');
       const titleNode = card.querySelector('b, strong');
-      const textNode = card.querySelector('span:last-child, p');
+      const textNode = card.querySelector('span:not(.ios-step-dot), p');
       if (icon && !icon.classList.contains('ios-step-dot')) icon.outerHTML = '<span class="ios-step-dot">' + item[0] + '</span>';
       if (icon && icon.classList.contains('ios-step-dot')) icon.textContent = item[0];
       if (titleNode) titleNode.textContent = item[1];
@@ -85,6 +91,8 @@
     const panel = document.querySelector('.share-panel');
     const pdf = document.getElementById('downloadPdf');
     const copy = document.getElementById('copySummary');
+    const nativeShare = document.getElementById('nativeShare');
+    if (nativeShare) nativeShare.hidden = true;
     if (!panel || (!pdf && !copy)) return;
 
     panel.querySelectorAll('a').forEach((node) => node.remove());
@@ -140,4 +148,5 @@
   setTimeout(run, 300);
   setTimeout(run, 900);
   setTimeout(run, 1800);
+  setTimeout(run, 2600);
 })();

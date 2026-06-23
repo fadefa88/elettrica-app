@@ -48,13 +48,22 @@
     }, true);
   }
 
+  function ensureFirstRealTrim(trim) {
+    if (!trim || trim.value) return;
+    const firstReal = Array.from(trim.options).find((option) => option.value);
+    if (firstReal) {
+      trim.value = firstReal.value;
+    }
+  }
+
   function repairTrimSelectors() {
     ['ev', 'ice'].forEach((kind) => {
       const trim = byId(kind === 'ev' ? 'evTrimSelect' : 'iceTrimSelect');
       const hidden = byId(kind === 'ev' ? 'evSelect' : 'iceSelect');
-      if (!trim || !hidden || trim.__iosFunctionalFixBound) return;
+      if (!trim || !hidden) return;
 
       const sync = () => {
+        ensureFirstRealTrim(trim);
         if (!trim.value) return;
         if (!Array.from(hidden.options).some((option) => option.value === trim.value)) {
           hidden.insertAdjacentHTML('afterbegin', '<option value="' + trim.value.replace(/"/g, '&quot;') + '">' + trim.value + '</option>');
@@ -67,9 +76,18 @@
         try { if (typeof updateNavigation === 'function') updateNavigation(); } catch (_) {}
       };
 
-      trim.addEventListener('change', sync);
-      trim.addEventListener('input', sync);
-      trim.__iosFunctionalFixBound = true;
+      if (!trim.__iosFunctionalFixBound) {
+        trim.addEventListener('change', sync);
+        trim.addEventListener('input', sync);
+        trim.__iosFunctionalFixBound = true;
+      }
+
+      // When a model has just been selected, the Motornet layer may expose the trim select
+      // but leave the first placeholder selected. Pick the first real trim so the car card,
+      // price and navigation update immediately.
+      if (trim.options && trim.options.length > 1 && !hidden.value) {
+        sync();
+      }
     });
   }
 
@@ -177,5 +195,5 @@
     run();
   }
 
-  setInterval(run, 700);
+  setInterval(run, 500);
 })();

@@ -75,19 +75,97 @@
 
   function keepHiddenBoundControls() {
     ['nativeShare', 'btnShareTop'].forEach((id) => {
-      const node = byId(id);
-      if (node) {
-        node.hidden = true;
-        node.setAttribute('aria-hidden', 'true');
-        node.style.display = 'none';
+      let node = byId(id);
+      if (!node) {
+        node = document.createElement('button');
+        node.id = id;
+        node.type = 'button';
+        node.textContent = id;
+        document.body.appendChild(node);
       }
+      node.hidden = true;
+      node.setAttribute('aria-hidden', 'true');
+      node.style.display = 'none';
+    });
+  }
+
+  function installSafeBindGuards() {
+    // app.js sometimes binds after async catalog loading. These guards prevent old app-only layers
+    // or preview cache from breaking the bind when share controls are hidden/removed.
+    keepHiddenBoundControls();
+    window.addEventListener('error', (event) => {
+      const msg = String(event.message || '');
+      if (msg.includes('nativeShare') || msg.includes('btnShareTop')) {
+        keepHiddenBoundControls();
+      }
+    }, true);
+  }
+
+  function photovoltaicConfigured() {
+    const noPv = !!byId('noPv')?.checked;
+    const unknownPv = !!byId('unknownPv')?.checked;
+    const solar = Number(byId('solarShare')?.value || 0);
+    return noPv || unknownPv || solar > 0;
+  }
+
+  function showPvHint(show) {
+    const screen = document.querySelector('.screen[data-step="5"]');
+    if (!screen) return;
+    let hint = byId('iosPvRequiredHint');
+    if (!hint) {
+      hint = document.createElement('div');
+      hint.id = 'iosPvRequiredHint';
+      hint.className = 'ios-validation-hint';
+      hint.textContent = 'Scegli una delle opzioni: ho fotovoltaico, non ho fotovoltaico oppure non lo so. Se hai fotovoltaico, inserisci una percentuale maggiore di 0.';
+      screen.appendChild(hint);
+    }
+    hint.hidden = !show;
+  }
+
+  function patchProceedValidation() {
+    if (window.__iosCanProceedPatched) return;
+    let original;
+    try { original = canProceed; } catch (_) { return; }
+    if (typeof original !== 'function') return;
+
+    try {
+      canProceed = function () {
+        if (activeStepIndex() === 5) {
+          const ok = photovoltaicConfigured();
+          showPvHint(!ok);
+          return ok;
+        }
+        return original.apply(this, arguments);
+      };
+      window.__iosCanProceedPatched = true;
+    } catch (_) {}
+  }
+
+  function patchPvInputs() {
+    ['noPv', 'unknownPv', 'solarShare'].forEach((id) => {
+      const el = byId(id);
+      if (!el || el.__iosPvBound) return;
+      el.addEventListener('input', () => {
+        showPvHint(activeStepIndex() === 5 && !photovoltaicConfigured());
+        try { if (typeof updateNavigation === 'function') updateNavigation(); } catch (_) {}
+      });
+      el.addEventListener('change', () => {
+        showPvHint(activeStepIndex() === 5 && !photovoltaicConfigured());
+        try { if (typeof updateNavigation === 'function') updateNavigation(); } catch (_) {}
+      });
+      el.__iosPvBound = true;
     });
   }
 
   function run() {
     keepHiddenBoundControls();
     repairTrimSelectors();
+    patchProceedValidation();
+    patchPvInputs();
+    if (activeStepIndex() === 5) showPvHint(!photovoltaicConfigured());
   }
+
+  installSafeBindGuards();
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {

@@ -18,6 +18,7 @@ const files = [
   'pwa-fixes.js',
   'car-images.css',
   'styles.css',
+  'app-sticky-header.css',
   'cookie-banner.css',
   'cookie-banner.js',
   'robots.txt',
@@ -104,6 +105,11 @@ function copyDirSafe(relPath) {
   console.log(`Copied dir: ${relPath}`);
 }
 
+function injectBefore(html, needle, snippet) {
+  if (html.includes(snippet.trim())) return html;
+  return html.replace(needle, `${snippet}\n${needle}`);
+}
+
 function patchIndexForBundle() {
   const indexPath = path.join(out, 'index.html');
   if (!fs.existsSync(indexPath)) return;
@@ -112,8 +118,13 @@ function patchIndexForBundle() {
     'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
     'vendor/jspdf.umd.min.js'
   );
+  html = injectBefore(
+    html,
+    '</head>',
+    '  <link rel="stylesheet" href="app-sticky-header.css?v=sticky-header-1">'
+  );
   fs.writeFileSync(indexPath, html, 'utf8');
-  console.log('Patched index.html to use bundled jsPDF');
+  console.log('Patched index.html to use bundled jsPDF and sticky header CSS');
 }
 
 fs.rmSync(out, { recursive: true, force: true });
@@ -124,7 +135,7 @@ dirs.forEach(copyDirSafe);
 vendorFiles.forEach((file) => copyExternalFileSafe(file.src, file.dest));
 patchIndexForBundle();
 
-const requiredFiles = ['index.html', 'app.js', 'styles.css'];
+const requiredFiles = ['index.html', 'app.js', 'styles.css', 'app-sticky-header.css'];
 const missing = requiredFiles.filter((file) => !fs.existsSync(path.join(out, file)));
 if (missing.length) {
   console.error(`Missing required iOS web files: ${missing.join(', ')}`);

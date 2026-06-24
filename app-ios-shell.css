@@ -1,0 +1,334 @@
+/* Clean iOS app shell for GitHub Pages preview and future Capacitor build. */
+:root {
+  --app-bg: #f4f7f5;
+  --app-surface: rgba(255,255,255,.92);
+  --app-card: #ffffff;
+  --app-text: #101817;
+  --app-muted: #66746f;
+  --app-line: rgba(205, 218, 211, .86);
+  --app-green: #0f9f63;
+  --app-green-soft: rgba(15,159,99,.10);
+  --app-shadow: 0 18px 46px rgba(16,32,26,.10);
+  --app-radius-xl: 30px;
+  --app-radius-lg: 24px;
+  --app-radius-md: 18px;
+}
+
+html {
+  background: var(--app-bg);
+  min-height: 100%;
+}
+
+body {
+  background: var(--app-bg) !important;
+  color: var(--app-text) !important;
+  min-height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;
+}
+
+body.eot-app-preview .app-bg {
+  min-height: 100dvh !important;
+  padding: 0 !important;
+  background:
+    radial-gradient(circle at 15% -10%, rgba(15,159,99,.16), transparent 32%),
+    linear-gradient(180deg, #f7faf8, #eef4f1) !important;
+}
+
+body.eot-app-preview .app-shell {
+  max-width: 520px !important;
+  min-height: 100dvh !important;
+  margin: 0 auto !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  overflow: visible !important;
+}
+
+body.eot-app-preview .site-footer,
+body.eot-app-preview footer,
+body.eot-app-preview .cookie-banner,
+body.eot-app-preview #cookieBanner,
+body.eot-app-preview .source-note,
+body.eot-app-preview .footer-links,
+body.eot-app-preview #btnShareTop,
+body.eot-app-preview #nativeShare,
+body.eot-app-preview #shareWhatsapp,
+body.eot-app-preview #shareFacebook,
+body.eot-app-preview #shareX,
+body.eot-app-preview #shareLinkedin,
+body.eot-app-preview .share-panel a,
+body.eot-app-preview a[href*="privacy"],
+body.eot-app-preview a[href*="guida"],
+body.eot-app-preview a[href*="metodologia"] {
+  display: none !important;
+}
+
+body.eot-app-preview .app-top {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 900 !important;
+  margin: 0 !important;
+  padding: calc(10px + env(safe-area-inset-top)) 14px 10px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--app-line) !important;
+  border-radius: 0 0 24px 24px !important;
+  background: rgba(248,251,249,.92) !important;
+  box-shadow: 0 10px 28px rgba(9,32,23,.10) !important;
+  backdrop-filter: blur(22px) saturate(1.14) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.14) !important;
+}
+
+body.eot-app-preview .brand {
+  min-width: 0 !important;
+  gap: 10px !important;
+}
+
+body.eot-app-preview .logo {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  border-radius: 15px !important;
+  background: linear-gradient(145deg, #07110e, #12432d) !important;
+  box-shadow: 0 10px 22px rgba(15,159,99,.22) !important;
+}
+
+body.eot-app-preview .logo img {
+  width: 30px !important;
+  height: 30px !important;
+  object-fit: contain !important;
+}
+
+body.eot-app-preview .brand b {
+  color: var(--app-text) !important;
+  font-size: 17px !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.035em !important;
+  white-space: nowrap !important;
+}
+
+body.eot-app-preview .brand small {
+  display: block !important;
+  max-width: calc(100vw - 100px) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: var(--app-muted) !important;
+  font-size: 11px !important;
+  line-height: 1.15 !important;
+  font-weight: 800 !important;
+}
+
+body.eot-app-preview .progress {
+  height: 6px !important;
+  margin: 10px 14px 0 !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  background: #e1ebe5 !important;
+}
+
+body.eot-app-preview .progress div {
+  background: linear-gradient(90deg, #0f9f63, #42f593) !important;
+}
+
+body.eot-app-preview .steps-label {
+  padding: 10px 16px 0 !important;
+  color: #6b7a74 !important;
+  font-size: 11px !important;
+}
+
+body.eot-app-preview .screen {
+  padding: 16px 14px 110px !important;
+  min-height: auto !important;
+}
+
+body.eot-app-preview .hero-card,
+body.eot-app-preview .card,
+body.eot-app-preview .result-card,
+body.eot-app-preview .car-visual,
+body.eot-app-preview .price-grid div,
+body.eot-app-preview .summary-grid div,
+body.eot-app-preview .metric,
+body.eot-app-preview .mini-car-card {
+  border-radius: var(--app-radius-lg) !important;
+  border: 1px solid var(--app-line) !important;
+  box-shadow: var(--app-shadow) !important;
+  background: var(--app-card) !important;
+}
+
+body.eot-app-preview .hero-card {
+  min-height: auto !important;
+  padding: 26px !important;
+  color: var(--app-text) !important;
+  background:
+    radial-gradient(circle at 90% 0%, rgba(66,245,147,.24), transparent 34%),
+    linear-gradient(145deg, #ffffff, #edf8f2) !important;
+}
+
+body.eot-app-preview .hero-card::after {
+  display: none !important;
+}
+
+body.eot-app-preview .eyebrow {
+  color: var(--app-green) !important;
+}
+
+body.eot-app-preview h1 {
+  color: var(--app-text) !important;
+  font-size: clamp(38px, 11vw, 56px) !important;
+  line-height: .95 !important;
+  letter-spacing: -.06em !important;
+  margin-bottom: 16px !important;
+}
+
+body.eot-app-preview h2 {
+  color: var(--app-text) !important;
+  font-size: clamp(29px, 8vw, 42px) !important;
+  line-height: 1 !important;
+  letter-spacing: -.05em !important;
+}
+
+body.eot-app-preview .lead,
+body.eot-app-preview .muted,
+body.eot-app-preview .info-grid span,
+body.eot-app-preview .car-visual span {
+  color: var(--app-muted) !important;
+  opacity: 1 !important;
+}
+
+body.eot-app-preview .info-grid,
+body.eot-app-preview .controls,
+body.eot-app-preview .controls.dense,
+body.eot-app-preview .price-grid,
+body.eot-app-preview .price-grid.two,
+body.eot-app-preview .summary-grid,
+body.eot-app-preview .metric-row,
+body.eot-app-preview .report-car-strip {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+
+body.eot-app-preview .info-grid div {
+  background: rgba(255,255,255,.72) !important;
+  color: var(--app-text) !important;
+  border: 1px solid var(--app-line) !important;
+  box-shadow: none !important;
+}
+
+body.eot-app-preview input,
+body.eot-app-preview select,
+body.eot-app-preview textarea {
+  font-size: 16px !important;
+  min-height: 52px !important;
+  border-radius: var(--app-radius-md) !important;
+  border-color: var(--app-line) !important;
+  background: #ffffff !important;
+  color: var(--app-text) !important;
+}
+
+body.eot-app-preview button,
+body.eot-app-preview .button {
+  min-height: 48px !important;
+  border-radius: var(--app-radius-md) !important;
+}
+
+body.eot-app-preview .choice,
+body.eot-app-preview .manual-choice,
+body.eot-app-preview .locked,
+body.eot-app-preview .inline-override {
+  background: #ffffff !important;
+  border: 1px solid var(--app-line) !important;
+  border-radius: var(--app-radius-md) !important;
+}
+
+body.eot-app-preview .car-visual {
+  grid-template-columns: 1fr !important;
+  padding: 16px !important;
+}
+
+body.eot-app-preview .car-art {
+  min-height: 150px !important;
+}
+
+body.eot-app-preview .bottom-nav {
+  position: fixed !important;
+  left: 50% !important;
+  bottom: 0 !important;
+  transform: translateX(-50%) !important;
+  width: min(520px, 100vw) !important;
+  z-index: 950 !important;
+  padding: 12px 14px calc(12px + env(safe-area-inset-bottom)) !important;
+  background: rgba(248,251,249,.94) !important;
+  border-top: 1px solid var(--app-line) !important;
+  box-shadow: 0 -12px 34px rgba(9,32,23,.10) !important;
+  backdrop-filter: blur(22px) saturate(1.14) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.14) !important;
+}
+
+body.eot-app-preview .bottom-nav button {
+  flex: 1 1 0 !important;
+}
+
+body.eot-app-preview .bottom-nav button + button {
+  margin-left: 10px !important;
+}
+
+body.eot-app-preview .share-panel {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+}
+
+body.eot-app-preview .share-panel #downloadPdf,
+body.eot-app-preview .share-panel #copySummary {
+  width: 100% !important;
+}
+
+body.eot-app-preview .cg-page.open {
+  background: var(--app-bg) !important;
+}
+
+body.eot-app-preview .cg-top {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10050 !important;
+  padding: calc(10px + env(safe-area-inset-top)) 14px 10px !important;
+  background: rgba(248,251,249,.94) !important;
+  border-bottom: 1px solid var(--app-line) !important;
+  box-shadow: 0 10px 28px rgba(9,32,23,.10) !important;
+  backdrop-filter: blur(22px) saturate(1.14) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.14) !important;
+}
+
+body.eot-app-preview .cg-body,
+body.eot-app-preview .cg-card {
+  background: #ffffff !important;
+  color: var(--app-text) !important;
+  border-color: var(--app-line) !important;
+}
+
+body.eot-app-preview .cg-muted,
+body.eot-app-preview .cg-card small,
+body.eot-app-preview .cg-card em {
+  color: var(--app-muted) !important;
+  opacity: 1 !important;
+}
+
+@media (min-width: 761px) {
+  body.eot-app-preview .app-bg {
+    padding: 20px 0 !important;
+  }
+
+  body.eot-app-preview .app-shell {
+    min-height: calc(100dvh - 40px) !important;
+    border-radius: 34px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(255,255,255,.72) !important;
+    box-shadow: 0 24px 80px rgba(9,32,23,.16) !important;
+    background: rgba(255,255,255,.58) !important;
+  }
+}

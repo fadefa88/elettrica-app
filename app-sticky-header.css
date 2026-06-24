@@ -1,0 +1,195 @@
+/* Shared sticky app header for comparator and choice guide. Small UI-only change. */
+:root {
+  --eot-header-bg: rgba(248, 251, 249, .88);
+  --eot-header-border: rgba(210, 222, 216, .78);
+  --eot-header-text: #101817;
+  --eot-header-muted: #65756f;
+  --eot-header-green: #0f9f63;
+}
+
+.app-shell {
+  overflow: visible !important;
+}
+
+.app-top {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 900 !important;
+  margin: 10px 10px 0 !important;
+  padding: calc(10px + env(safe-area-inset-top)) 12px 10px !important;
+  border: 1px solid var(--eot-header-border) !important;
+  border-radius: 24px !important;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.96), rgba(239,248,243,.86)),
+    var(--eot-header-bg) !important;
+  box-shadow: 0 14px 36px rgba(9, 32, 23, .12) !important;
+  backdrop-filter: blur(22px) saturate(1.18) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.18) !important;
+}
+
+.app-top::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle at 12% 0%, rgba(66,245,147,.20), transparent 36%);
+}
+
+.app-top .brand,
+.app-top .top-actions {
+  position: relative;
+  z-index: 1;
+}
+
+.app-top .logo {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  border-radius: 15px !important;
+  background: linear-gradient(145deg, #07110e, #12432d) !important;
+  box-shadow: 0 10px 22px rgba(15,159,99,.24) !important;
+}
+
+.app-top .logo img {
+  width: 30px !important;
+  height: 30px !important;
+  object-fit: contain !important;
+}
+
+.app-top .brand b {
+  color: var(--eot-header-text) !important;
+  font-size: 18px !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.035em !important;
+}
+
+.app-top .brand small {
+  color: var(--eot-header-muted) !important;
+  font-size: 11px !important;
+  line-height: 1.15 !important;
+  font-weight: 850 !important;
+  margin-top: 2px !important;
+}
+
+.app-top .top-actions .ghost {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 15px !important;
+  background: rgba(15, 159, 99, .10) !important;
+  color: var(--eot-header-green) !important;
+  border: 1px solid rgba(15,159,99,.16) !important;
+}
+
+/* Same visual language for the full-screen choice guide header. */
+.cg-page .cg-top {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10050 !important;
+  margin: 10px 10px 0 !important;
+  padding: calc(10px + env(safe-area-inset-top)) 12px 10px !important;
+  border: 1px solid var(--eot-header-border) !important;
+  border-radius: 24px !important;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.96), rgba(239,248,243,.86)),
+    var(--eot-header-bg) !important;
+  box-shadow: 0 14px 36px rgba(9, 32, 23, .12) !important;
+  backdrop-filter: blur(22px) saturate(1.18) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.18) !important;
+}
+
+.cg-page .cg-top::before {
+  content: "";
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 15px;
+  background: linear-gradient(145deg, #07110e, #12432d) center/30px 30px no-repeat;
+  background-image: url("assets/logopippo.png"), linear-gradient(145deg, #07110e, #12432d);
+  box-shadow: 0 10px 22px rgba(15,159,99,.24);
+}
+
+.cg-page .cg-top > div:first-child {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.cg-page .cg-top b {
+  display: block !important;
+  color: var(--eot-header-text) !important;
+  font-size: 18px !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.035em !important;
+}
+
+.cg-page .cg-top .cg-muted {
+  color: var(--eot-header-muted) !important;
+  font-size: 11px !important;
+  line-height: 1.15 !important;
+  font-weight: 850 !important;
+  margin-top: 2px !important;
+}
+
+.cg-page #cgClose {
+  min-width: 42px !important;
+  width: 42px !important;
+  height: 42px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  border-radius: 15px !important;
+  background: rgba(15, 159, 99, .10) !important;
+  color: transparent !important;
+  border: 1px solid rgba(15,159,99,.16) !important;
+  position: relative !important;
+}
+
+.cg-page #cgClose::after {
+  content: "×";
+  color: var(--eot-header-green);
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 800;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.cg-page.open {
+  overflow: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+@media (max-width: 760px) {
+  .app-bg {
+    padding-top: 0 !important;
+  }
+
+  .app-top,
+  .cg-page .cg-top {
+    margin: 8px 8px 0 !important;
+    border-radius: 22px !important;
+  }
+
+  .app-top .brand {
+    min-width: 0 !important;
+  }
+
+  .app-top .brand b,
+  .cg-page .cg-top b {
+    font-size: 17px !important;
+  }
+
+  .app-top .brand small {
+    display: block !important;
+    max-width: calc(100vw - 132px) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .progress {
+    margin-top: 8px !important;
+  }
+}

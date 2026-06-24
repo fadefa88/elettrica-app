@@ -3,7 +3,6 @@
   const START_YEAR=2026;
   const SITE_NAME='Elettrica o Termica';
   const SITE_URL='elettricaotermica.it';
-  const PUBLIC_URL='https://elettricaotermica.it/';
   let localJsPdfPromise=null;
 
   function byId(id){return document.getElementById(id)}
@@ -18,7 +17,9 @@
     if(banner) banner.classList.remove('is-visible');
     if(choice==='accepted' && typeof window.EOT_ENABLE_ANALYTICS==='function') window.EOT_ENABLE_ANALYTICS();
   }
+
   function readChoice(){try{return localStorage.getItem(STORAGE_KEY)}catch(e){return null}}
+
   function showBanner(){
     if(isNativeApp()) return;
     if(byId('cookieBanner')) return;
@@ -43,32 +44,14 @@
     shell.appendChild(footer);
   }
 
-  function installAppPolish(){
+  function installSafeMobileInputPolish(){
     const viewport=document.querySelector('meta[name="viewport"]');
-    if(viewport) viewport.setAttribute('content','width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no');
-
-    if(!byId('eotAppPolishCss')){
-      const style=document.createElement('style');
-      style.id='eotAppPolishCss';
-      style.textContent='body{-webkit-text-size-adjust:100%;overscroll-behavior-y:none}input,select,textarea{font-size:16px!important}.site-footer,.app-footer,footer{display:none!important}.top-actions,#btnShareTop,#nativeShare,#shareWhatsapp,#shareFacebook,#shareX,#shareLinkedin{display:none!important}.share-panel{gap:10px}.share-panel #downloadPdf,.share-panel #copySummary{flex:1 1 160px;min-height:48px}.share-panel a{display:none!important}@media(max-width:760px){.app-shell{min-height:100dvh}.app-top{padding:calc(10px + env(safe-area-inset-top)) 14px 10px;gap:8px}.brand{min-width:0;flex:1;gap:10px}.brand .logo,.logo{width:36px!important;height:36px!important;min-width:36px;border-radius:12px}.brand b{font-size:18px!important;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100vw - 72px)}.brand small{display:none!important}.screen{padding-left:16px!important;padding-right:16px!important}.bottom-nav{padding-bottom:calc(16px + env(safe-area-inset-bottom))}}';
-      document.head.appendChild(style);
-    }
-
-    const topShare=byId('btnShareTop');
-    if(topShare) topShare.remove();
-    ['shareWhatsapp','shareFacebook','shareX','shareLinkedin','nativeShare'].forEach(function(id){const el=byId(id); if(el) el.remove()});
-    const pdf=byId('downloadPdf');
-    if(pdf) pdf.innerHTML='<i class="fa-solid fa-file-pdf"></i> Esporta PDF';
-    const copy=byId('copySummary');
-    if(copy) copy.innerHTML='<i class="fa-solid fa-copy"></i> Copia risultato';
-    const brand=document.querySelector('.brand b');
-    if(brand) brand.textContent='Elettrica o Termica';
-
-    document.querySelectorAll('input,select,textarea').forEach(function(el){
-      if(el.dataset.eotInputPatched) return;
-      el.dataset.eotInputPatched='1';
-      el.addEventListener('focus',function(){setTimeout(function(){try{el.scrollIntoView({block:'center',behavior:'smooth'})}catch(e){}},260)},{passive:true});
-    });
+    if(viewport && isNativeApp()) viewport.setAttribute('content','width=device-width,initial-scale=1,viewport-fit=cover');
+    if(byId('eotSafeMobileInputCss')) return;
+    const style=document.createElement('style');
+    style.id='eotSafeMobileInputCss';
+    style.textContent='input,select,textarea{font-size:16px!important}';
+    document.head.appendChild(style);
   }
 
   async function loadLocalJsPdf(){
@@ -94,91 +77,20 @@
           const dataUri=doc.output('datauristring');
           const base64=String(dataUri||'').split(',')[1]||'';
           if(base64){
-            const path=(fileName||'report-elettricaotermica.pdf').replace(/[^a-zA-Z0-9_.-]/g,'-');
-            await Filesystem.writeFile({path:path,data:base64,directory:'CACHE',recursive:true});
-            const uriResult=await Filesystem.getUri({path:path,directory:'CACHE'});
+            const safePath=(fileName||'report-elettricaotermica.pdf').replace(/[^a-zA-Z0-9_.-]/g,'-');
+            await Filesystem.writeFile({path:safePath,data:base64,directory:'CACHE',recursive:true});
+            const uriResult=await Filesystem.getUri({path:safePath,directory:'CACHE'});
             await Share.share({title:'Report Elettrica o Termica',text:'Report PDF del confronto auto.',url:uriResult.uri,dialogTitle:'Esporta PDF'});
             return;
           }
         }catch(e){
           console.warn('Native PDF export failed',e);
-          alert('PDF generato, ma non sono riuscito ad aprire la condivisione iOS. Riprova o usa Copia risultato.');
+          alert('PDF generato, ma non sono riuscito ad aprire la condivisione iOS. Riprova o usa Copia riepilogo.');
           return;
         }
       }
     }
     doc.save(fileName||'report-elettricaotermica.pdf');
-  }
-
-  async function loadGuideCatalog(){
-    try{
-      const r=await fetch('/data/cars_motornet.json',{cache:'no-store'});
-      if(!r.ok) return;
-      const payload=await r.json();
-      const cars=(payload.cars||[]).filter(function(c){return c&&clean(c.id)&&clean(c.brand)&&clean(c.model)});
-      const seenEv=new Set(),seenIc=new Set();
-      window.__eotGuideEV=cars.filter(function(c){const ok=clean(c.category)==='electric'&&!seenEv.has(c.id); if(ok)seenEv.add(c.id); return ok;});
-      window.__eotGuideIC=cars.filter(function(c){const ok=clean(c.category)!=='electric'&&!seenIc.has(c.id); if(ok)seenIc.add(c.id); return ok;});
-      window.__eotGuideCatalogReady=true;
-    }catch(e){}
-  }
-
-  function activeStep(){
-    const screen=document.querySelector('.screen.active');
-    return screen ? Number(screen.dataset.step) : 0;
-  }
-  function syncStepUi(){
-    const step=activeStep();
-    const prev=byId('prevStep');
-    const shell=document.querySelector('.app-shell');
-    if(shell) shell.dataset.currentStep=String(step);
-    if(prev) prev.style.display = step===0 ? 'none' : '';
-    installAppPolish();
-  }
-  function pvIsValid(){
-    if(activeStep()!==5) return true;
-    const noPv=!!byId('noPv')?.checked;
-    const unknownPv=!!byId('unknownPv')?.checked;
-    const solar=Number(byId('solarShare')?.value||0);
-    return noPv || unknownPv || solar>0;
-  }
-  function showPvError(){
-    const section=document.querySelector('.screen[data-step="5"] .card.soft');
-    if(!section) return;
-    let msg=byId('pvValidationMsg');
-    if(!msg){
-      msg=document.createElement('div');
-      msg.id='pvValidationMsg';
-      msg.className='explain small pv-error';
-      section.appendChild(msg);
-    }
-    msg.innerHTML='<b>Dato fotovoltaico mancante.</b> Se non hai impianto fotovoltaico seleziona “Non ho impianto fotovoltaico”, altrimenti indica una quota fotovoltaico maggiore di 0%.';
-    msg.scrollIntoView({behavior:'smooth',block:'center'});
-  }
-  function patchNavigation(){
-    if(window.__eotNavigationPatched) return;
-    window.__eotNavigationPatched=true;
-    document.addEventListener('click',function(ev){
-      const next=ev.target.closest && ev.target.closest('#nextStep');
-      if(next && !pvIsValid()){
-        ev.preventDefault();
-        ev.stopImmediatePropagation();
-        showPvError();
-      }
-      setTimeout(syncStepUi,0);
-      setTimeout(syncStepUi,80);
-    },true);
-    document.addEventListener('input',function(ev){
-      if(ev.target && ['noPv','unknownPv','solarShare'].includes(ev.target.id)){
-        const msg=byId('pvValidationMsg');
-        if(msg && pvIsValid()) msg.remove();
-      }
-      setTimeout(syncStepUi,0);
-    },true);
-    const observer=new MutationObserver(syncStepUi);
-    document.querySelectorAll('.screen').forEach(s=>observer.observe(s,{attributes:true,attributeFilter:['class']}));
-    syncStepUi();
-    setInterval(syncStepUi,1000);
   }
 
   async function imageToJpegDataUrl(input){
@@ -189,7 +101,7 @@
       else src=input.currentSrc || input.src || input.getAttribute?.('src') || '';
       if(!src) return resolve(null);
 
-      async function drawUrl(url){
+      function drawUrl(url){
         return new Promise(function(done){
           const img=new Image();
           img.crossOrigin='anonymous';
@@ -267,6 +179,7 @@
       doc.setFontSize(12);doc.setTextColor(16,24,23);doc.text(String(value),x+5,y+53,{maxWidth:w-10});
       if(sub){doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(100,115,110);doc.text(String(sub),x+5,y+62,{maxWidth:w-10})}
     }
+
     let y=72;
     card(14,y,88,70,'AUTO ELETTRICA',evName,text('#evPer100','')+' / 100 km',evPhoto,'ev');
     card(108,y,88,70,'AUTO TERMICA',iceName,text('#icePer100','')+' / 100 km',icePhoto,'ice');
@@ -301,24 +214,20 @@
   window.EOT_RESET_COOKIE_CHOICE=function(){try{localStorage.removeItem(STORAGE_KEY)}catch(e){} showBanner()};
 
   function boot(){
-    installAppPolish();
+    installSafeMobileInputPolish();
     const choice=readChoice();
     if(!choice) showBanner();
     else if(choice==='accepted' && typeof window.EOT_ENABLE_ANALYTICS==='function') window.EOT_ENABLE_ANALYTICS();
     const reset=byId('resetCookieChoice');
     if(reset) reset.addEventListener('click',window.EOT_RESET_COOKIE_CHOICE);
-    if(!isNativeApp()) installFooter();
-    loadGuideCatalog();
-    patchNavigation();
+    installFooter();
     patchPdfButton();
     setTimeout(patchPdfButton,1200);
     setTimeout(patchPdfButton,3000);
-    setTimeout(installAppPolish,400);
-    setTimeout(syncStepUi,500);
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
   else boot();
-  window.addEventListener('load',function(){installAppPolish();if(!isNativeApp())installFooter();loadGuideCatalog();patchNavigation();patchPdfButton();syncStepUi();});
-  window.addEventListener('motornet:catalog-ready',function(){installAppPolish();loadGuideCatalog();patchPdfButton();syncStepUi();});
+  window.addEventListener('load',function(){installSafeMobileInputPolish();installFooter();patchPdfButton();});
+  window.addEventListener('motornet:catalog-ready',function(){patchPdfButton();});
 })();

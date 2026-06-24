@@ -20,13 +20,6 @@ const files = [
   'styles.css',
   'cookie-banner.css',
   'cookie-banner.js',
-  'ios-app.css',
-  'ios-app.js',
-  'ios-native-polish.css',
-  'ios-native-polish.js',
-  'ios-functional-fixes.js',
-  'ios-final-overrides.css',
-  'ios-final-fixes.js',
   'robots.txt',
   'sitemap.xml',
   'manifest.webmanifest',
@@ -111,93 +104,16 @@ function copyDirSafe(relPath) {
   console.log(`Copied dir: ${relPath}`);
 }
 
-function injectBefore(html, needle, snippet) {
-  if (html.includes(snippet.trim())) return html;
-  return html.replace(needle, `${snippet}\n${needle}`);
-}
-
-function patchAppJsForNativeBundle() {
-  const appPath = path.join(out, 'app.js');
-  if (!fs.existsSync(appPath)) return;
-  let js = fs.readFileSync(appPath, 'utf8');
-
-  const unsafeShareBind = "$('downloadPdf').onclick=downloadPdf;$('nativeShare').onclick=shareNative;$('btnShareTop').onclick=shareNative;$('copySummary').onclick=copySummary;";
-  const safeShareBind = "if($('downloadPdf'))$('downloadPdf').onclick=downloadPdf;if($('nativeShare'))$('nativeShare').onclick=shareNative;if($('btnShareTop'))$('btnShareTop').onclick=shareNative;if($('copySummary'))$('copySummary').onclick=copySummary;";
-  if (js.includes(unsafeShareBind)) {
-    js = js.replace(unsafeShareBind, safeShareBind);
-  }
-
-  const unsafeNavBind = "function bind(){$('prevStep').onclick=()=>setStep(currentStep-1);$('nextStep').onclick=()=>{if(currentStep===totalSteps-1)return setStep(0);if(canProceed())setStep(currentStep+1)};";
-  const safeNavBind = "function bind(){if($('prevStep'))$('prevStep').onclick=()=>setStep(currentStep-1);if($('nextStep'))$('nextStep').onclick=()=>{if(currentStep===totalSteps-1)return setStep(0);if(canProceed())setStep(currentStep+1)};";
-  if (js.includes(unsafeNavBind)) {
-    js = js.replace(unsafeNavBind, safeNavBind);
-  }
-
-  fs.writeFileSync(appPath, js, 'utf8');
-  console.log('Patched app.js unsafe DOM bindings for native bundle');
-}
-
-function injectIosAppLayer() {
+function patchIndexForBundle() {
   const indexPath = path.join(out, 'index.html');
   if (!fs.existsSync(indexPath)) return;
-
   let html = fs.readFileSync(indexPath, 'utf8');
-
-  // Use bundled assets in the native app. Remote CDN dependencies are fragile in WebView/offline mode.
   html = html.replace(
     'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
     'vendor/jspdf.umd.min.js'
   );
-
-  html = injectBefore(
-    html,
-    '</head>',
-    '  <link rel="stylesheet" href="ios-app.css?v=ios-app-6">'
-  );
-
-  html = injectBefore(
-    html,
-    '</head>',
-    '  <link rel="stylesheet" href="ios-native-polish.css?v=ios-native-4">'
-  );
-
-  html = injectBefore(
-    html,
-    '</head>',
-    '  <link rel="stylesheet" href="ios-final-overrides.css?v=ios-final-1">'
-  );
-
-  html = injectBefore(
-    html,
-    '</body>',
-    '<script src="ios-app.js?v=ios-app-6"></script>'
-  );
-
-  html = injectBefore(
-    html,
-    '</body>',
-    '<script src="ios-native-polish.js?v=ios-native-4"></script>'
-  );
-
-  html = injectBefore(
-    html,
-    '</body>',
-    '<script src="ios-functional-fixes.js?v=ios-functional-3"></script>'
-  );
-
-  html = injectBefore(
-    html,
-    '</body>',
-    '<script src="ios-final-fixes.js?v=ios-final-1"></script>'
-  );
-
-  html = html.replace('<html lang="it">', '<html lang="it" class="eot-ios-app">');
-  html = html.replace('<body>', '<body class="eot-ios-app">');
-
-  // In the native app the cookie banner, web footer and web social links are not useful.
-  // CSS hides them before the JavaScript app layer runs, avoiding a visible flash.
   fs.writeFileSync(indexPath, html, 'utf8');
-  console.log('Injected final iOS app layer');
+  console.log('Patched index.html to use bundled jsPDF');
 }
 
 fs.rmSync(out, { recursive: true, force: true });
@@ -206,14 +122,13 @@ fs.mkdirSync(out, { recursive: true });
 files.forEach(copyFileSafe);
 dirs.forEach(copyDirSafe);
 vendorFiles.forEach((file) => copyExternalFileSafe(file.src, file.dest));
-patchAppJsForNativeBundle();
-injectIosAppLayer();
+patchIndexForBundle();
 
-const requiredFiles = ['index.html', 'app.js', 'styles.css', 'ios-app.css', 'ios-app.js', 'ios-native-polish.css', 'ios-native-polish.js', 'ios-functional-fixes.js', 'ios-final-overrides.css', 'ios-final-fixes.js'];
+const requiredFiles = ['index.html', 'app.js', 'styles.css'];
 const missing = requiredFiles.filter((file) => !fs.existsSync(path.join(out, file)));
 if (missing.length) {
   console.error(`Missing required iOS web files: ${missing.join(', ')}`);
   process.exit(1);
 }
 
-console.log('\n✅ iOS web bundle ready in www/');
+console.log('\n✅ Stable web bundle ready in www/');

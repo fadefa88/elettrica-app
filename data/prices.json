@@ -1,11 +1,11 @@
 {
-  "updated_at": "2026-09-01T11:37:00.896925+00:00",
+  "updated_at": "2026-09-02T11:15:41.309602+00:00",
   "status": "updated_mimit_csv_daily",
   "fuel": {
-    "benzina": 2.02,
-    "gasolio": 2.157,
+    "benzina": 2.026,
+    "gasolio": 2.158,
     "gpl": 0.755,
-    "metano": 1.669,
+    "metano": 1.68,
     "units": {
       "benzina": "eur_l",
       "gasolio": "eur_l",
@@ -16,9 +16,9 @@
     "frequency": "daily_csv_raw",
     "samples": {
       "benzina": 20525,
-      "gasolio": 25550,
-      "gpl": 4684,
-      "metano": 1575
+      "gasolio": 25560,
+      "gpl": 4701,
+      "metano": 1579
     },
     "average_method": "raw_station_mean"
   },

@@ -1,11 +1,11 @@
 {
-  "updated_at": "2026-10-10T12:28:50.941727+00:00",
-  "status": "fallback_previous_values",
+  "updated_at": "2026-10-11T12:46:32.434568+00:00",
+  "status": "updated_mimit_csv_daily",
   "fuel": {
-    "benzina": 2.04,
-    "gasolio": 2.283,
-    "gpl": 0.775,
-    "metano": 1.903,
+    "benzina": 2.038,
+    "gasolio": 2.273,
+    "gpl": 0.777,
+    "metano": 1.909,
     "units": {
       "benzina": "eur_l",
       "gasolio": "eur_l",
@@ -15,9 +15,9 @@
     "source": "https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv",
     "frequency": "daily_csv_raw",
     "samples": {
-      "benzina": 20549,
-      "gasolio": 25574,
-      "gpl": 4704,
+      "benzina": 20553,
+      "gasolio": 25577,
+      "gpl": 4707,
       "metano": 1573
     },
     "average_method": "raw_station_mean"

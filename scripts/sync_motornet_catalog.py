@@ -16,6 +16,10 @@ import import_motornet as base
 import import_motornet_resume as resume
 
 IGNORED_BRAND_CODES = {"COR"}
+# Generic search filters expose values resembling short brand identifiers.
+# Accept only real known Motornet brand codes during automatic discovery.
+VALID_BRAND_CODES = frozenset(resume.extended_brand_codes()) - IGNORED_BRAND_CODES
+MAJOR_BRAND_HEALTHCHECK = frozenset({"AUD", "BMW", "BYD", "FIA", "FOR", "MER", "REN", "TOY", "VLK"})
 
 
 def bool_arg(value: object) -> bool:
@@ -74,6 +78,21 @@ def filter_ignored_brand_urls(urls: list[str]) -> list[str]:
     return filtered
 
 
+def filter_valid_brand_urls(urls: list[str]) -> list[str]:
+    """Discard search-filter values accidentally parsed as brand URLs."""
+    valid: list[str] = []
+    invalid: list[str] = []
+    for url in urls:
+        code = brand_code_from_brand_url(url)
+        if code not in VALID_BRAND_CODES:
+            invalid.append(code or str(url))
+        elif url not in valid:
+            valid.append(url)
+    if invalid:
+        print(f"Ignored {len(invalid)} non-brand URLs from listing filters; examples={invalid[:8]}")
+    return valid
+
+
 def load_existing_catalog(path: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
     if not path.exists():
         return [], [], {}
@@ -120,9 +139,16 @@ def build_brand_urls(page, args, robots, errors: list[dict[str, Any]]) -> tuple[
     page.goto(base.LIST_URL, wait_until="domcontentloaded", timeout=args.timeout)
     page.wait_for_timeout(2500)
     requests_count += 1
-    urls = base.discover_links_after_clicking_menus(page, r"^/auto/scheda-modello/[A-Z0-9]{2,4}$")
+    brand_pattern = r"^/auto/scheda-modello/[A-Z0-9]{2,4}$"
+    # The generic click-every-menu discovery sees unrelated select values like
+    # 5000, IB and SUV and can incorrectly stop before opening the brand menu.
+    urls = filter_valid_brand_urls(base.extract_links(page, brand_pattern))
     if not urls:
-        print("  automatic brand discovery returned 0 links; using known brand code fallback")
+        base.open_possible_dropdowns(page)
+        page.wait_for_timeout(1200)
+        urls = filter_valid_brand_urls(base.extract_links(page, brand_pattern))
+    if not urls:
+        print("  no valid brands loaded in listing; falling back to known brand codes")
         urls = [f"{base.BASE}/auto/scheda-modello/{code}" for code in resume.extended_brand_codes()]
     return filter_ignored_brand_urls(urls), requests_count
 
@@ -131,6 +157,7 @@ def discover_active_detail_urls(page, brand_urls: list[str], args, robots, error
     active: list[str] = []
     seen: set[str] = set()
     requests_count = 0
+    major_brands_without_details: set[str] = set()
 
     for brand_url in brand_urls:
         if is_ignored_brand_url(brand_url):
@@ -158,6 +185,19 @@ def discover_active_detail_urls(page, brand_urls: list[str], args, robots, error
                         detail_links.append(detail_url)
 
             print("  active detail links:", len(detail_links))
+            brand_code = brand_code_from_brand_url(brand_url)
+            if brand_code in MAJOR_BRAND_HEALTHCHECK and not detail_links:
+                major_brands_without_details.add(brand_code)
+            if (
+                not args.brand_codes.strip()
+                and not active
+                and len(major_brands_without_details) >= 2
+            ):
+                raise SystemExit(
+                    "Safety stop: no vehicle details returned by major Motornet brands "
+                    f"{sorted(major_brands_without_details)}. Source data may be unavailable; "
+                    "existing catalog was not modified."
+                )
             for detail_url in detail_links:
                 url = canonical_url(detail_url)
                 if is_ignored_detail_url(url):

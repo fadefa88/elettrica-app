@@ -18,8 +18,14 @@ EXTRA_BRAND_CODES = [
     "ALN", "ALP", "BEN", "BES", "CAT", "CHA", "DEN", "COR", "DFS",
     "DOG", "FTH", "GVT", "GRW", "ICH", "ISU", "JAE", "LAM", "LEA", "LEE", "LEP",
     "LYN", "MAH", "MAX", "MHE", "MOR", "OMO", "SER", "SPO",
+    # Legitimate brand codes previously filtered as generic Motornet selectors.
+    "CHR", "DRM", "DSA", "EMC", "FOT", "GEE", "GEN", "KGM",
+    "MGG", "RAM", "SWM", "TIG", "VOY", "XPE", "ZEE",
 ]
 RESUME_STATE = Path("data/cars_motornet_resume_state.json")
+# Some vehicles use an allestimento prefix different from their brand page.
+DETAIL_BRAND_ALIASES = {"MCC": "SMA"}
+
 
 
 def bool_arg(value: object) -> bool:
@@ -82,6 +88,9 @@ def brand_code_from_detail_url(url: object, valid_codes: set[str] | None = None)
     token = match.group(1).upper()
 
     codes = sorted((valid_codes or set(extended_brand_codes())), key=len, reverse=True)
+    alias = DETAIL_BRAND_ALIASES.get(token[:3])
+    if alias and alias in codes:
+        return alias
     for code in codes:
         if token.startswith(code):
             return code

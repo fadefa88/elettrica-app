@@ -297,6 +297,7 @@ def main() -> int:
         context = browser.new_context(user_agent=base.UA, locale="it-IT")
         page = context.new_page()
 
+        scan_errors_start = len(errors)
         brand_urls, count = build_brand_urls(page, args, robots, errors)
         requests_count += count
         print("brand links:", len(brand_urls))
@@ -314,14 +315,33 @@ def main() -> int:
 
         active_set = set(active_urls)
         removed_urls: set[str] = set()
+        candidate_removed_urls: set[str] = set()
+        removal_skipped_reason = ""
         if args.remove_missing and full_catalog_scan and existing_by_url:
-            removed_urls = set(existing_by_url) - active_set
-            removal_ratio = len(removed_urls) / max(1, len(existing_by_url))
-            if removed_urls and removal_ratio > args.max_removal_ratio and not args.allow_large_removal:
-                raise SystemExit(
-                    f"Safety stop: would remove {len(removed_urls)} cars ({removal_ratio:.1%}), "
-                    f"above max-removal-ratio={args.max_removal_ratio:.1%}. "
-                    "Rerun manually with allow_large_removal=true if this is expected."
+            candidate_removed_urls = set(existing_by_url) - active_set
+            removal_ratio = len(candidate_removed_urls) / max(1, len(existing_by_url))
+            # Any failed brand/model scan makes the absence of URLs unreliable.
+            scan_errors = [
+                error for error in errors[scan_errors_start:]
+                if str(error.get("error", "")).startswith(
+                    ("brand_scan:", "model_expand:", "blocked_by_robots")
+                )
+            ]
+            if scan_errors:
+                removal_skipped_reason = f"{len(scan_errors)} scan errors"
+            elif candidate_removed_urls and removal_ratio > args.max_removal_ratio and not args.allow_large_removal:
+                removal_skipped_reason = (
+                    f"{len(candidate_removed_urls)} candidates ({removal_ratio:.1%}) exceed "
+                    f"max-removal-ratio={args.max_removal_ratio:.1%}"
+                )
+            else:
+                removed_urls = candidate_removed_urls
+
+            if removal_skipped_reason:
+                print(
+                    "WARN: automatic removals skipped to protect existing catalog:",
+                    removal_skipped_reason,
+                    "Existing cars will be preserved; new cars will still be imported.",
                 )
         elif args.remove_missing and not full_catalog_scan:
             print("Limited brand run: deletion disabled outside full-catalog scans.")
@@ -369,12 +389,19 @@ def main() -> int:
             cars_by_url.pop(url, None)
         cars_by_url.update(parsed_new)
 
-        # Preserve Motornet list order for stable frontend dropdowns and deterministic diffs.
-        ordered_cars = [cars_by_url[url] for url in active_urls if url in cars_by_url and not is_ignored_car(cars_by_url[url])]
-        if not full_catalog_scan:
-            touched = set(active_urls)
-            untouched = [car for url, car in cars_by_url.items() if url not in touched and not is_ignored_car(car)]
-            ordered_cars = untouched + [cars_by_url[url] for url in active_urls if url in cars_by_url and not is_ignored_car(cars_by_url[url])]
+        # Keep discovered Motornet order; when removals are disabled or blocked,
+        # also keep old records absent from this scan. Otherwise --remove-missing=false
+        # would silently delete cars because only active_urls were written out.
+        ordered_cars = [
+            cars_by_url[url] for url in active_urls
+            if url in cars_by_url and not is_ignored_car(cars_by_url[url])
+        ]
+        if not full_catalog_scan or not args.remove_missing or removal_skipped_reason:
+            untouched = [
+                car for url, car in cars_by_url.items()
+                if url not in active_set and not is_ignored_car(car)
+            ]
+            ordered_cars = untouched + ordered_cars
 
         context.close()
         browser.close()
@@ -394,6 +421,8 @@ def main() -> int:
         "existing_unique_urls_before": len(existing_by_url),
         "new_added": len(parsed_new),
         "removed_missing_from_motornet": len(removed_urls),
+        "candidate_missing_from_motornet": len(candidate_removed_urls),
+        "removal_skipped_reason": removal_skipped_reason,
         "ignored_brand_codes": sorted(IGNORED_BRAND_CODES),
         "new_limit": args.new_limit,
         "remove_missing": bool(args.remove_missing and full_catalog_scan),

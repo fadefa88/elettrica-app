@@ -121,6 +121,24 @@ def dedupe_keep_last(cars: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return by_url
 
 
+def order_catalog_cars(
+    active_urls: list[str], cars_by_url: dict[str, dict[str, Any]], preserve_unlisted: bool
+) -> list[dict[str, Any]]:
+    """Retain unlisted existing cars when a scan cannot safely delete them."""
+    active_set = set(active_urls)
+    ordered = [
+        cars_by_url[url] for url in active_urls
+        if url in cars_by_url and not is_ignored_car(cars_by_url[url])
+    ]
+    if preserve_unlisted:
+        untouched = [
+            car for url, car in cars_by_url.items()
+            if url not in active_set and not is_ignored_car(car)
+        ]
+        return untouched + ordered
+    return ordered
+
+
 def build_brand_urls(page, args, robots, errors: list[dict[str, Any]]) -> tuple[list[str], int]:
     requests_count = 0
     if args.brand_codes.strip():
@@ -389,19 +407,14 @@ def main() -> int:
             cars_by_url.pop(url, None)
         cars_by_url.update(parsed_new)
 
-        # Keep discovered Motornet order; when removals are disabled or blocked,
-        # also keep old records absent from this scan. Otherwise --remove-missing=false
-        # would silently delete cars because only active_urls were written out.
-        ordered_cars = [
-            cars_by_url[url] for url in active_urls
-            if url in cars_by_url and not is_ignored_car(cars_by_url[url])
-        ]
-        if not full_catalog_scan or not args.remove_missing or removal_skipped_reason:
-            untouched = [
-                car for url, car in cars_by_url.items()
-                if url not in active_set and not is_ignored_car(car)
-            ]
-            ordered_cars = untouched + ordered_cars
+        # Do not silently remove unlisted cars when deletion is disabled or unsafe.
+        ordered_cars = order_catalog_cars(
+            active_urls,
+            cars_by_url,
+            preserve_unlisted=bool(
+                not full_catalog_scan or not args.remove_missing or removal_skipped_reason
+            ),
+        )
 
         context.close()
         browser.close()

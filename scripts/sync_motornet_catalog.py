@@ -121,6 +121,28 @@ def dedupe_keep_last(cars: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return by_url
 
 
+def plan_catalog_removals(
+    existing_urls: set[str],
+    active_urls: set[str],
+    max_removal_ratio: float,
+    allow_large_removal: bool,
+    scan_errors: list[dict[str, Any]],
+) -> tuple[set[str], set[str], str]:
+    """Return approved removals, all candidate removals, and an optional warning."""
+    candidates = existing_urls - active_urls
+    ratio = len(candidates) / max(1, len(existing_urls))
+    if scan_errors:
+        return set(), candidates, f"{len(scan_errors)} scan errors"
+    if candidates and ratio > max_removal_ratio and not allow_large_removal:
+        return (
+            set(),
+            candidates,
+            f"{len(candidates)} candidates ({ratio:.1%}) exceed "
+            f"max-removal-ratio={max_removal_ratio:.1%}",
+        )
+    return candidates, candidates, ""
+
+
 def order_catalog_cars(
     active_urls: list[str], cars_by_url: dict[str, dict[str, Any]], preserve_unlisted: bool
 ) -> list[dict[str, Any]]:
@@ -336,8 +358,6 @@ def main() -> int:
         candidate_removed_urls: set[str] = set()
         removal_skipped_reason = ""
         if args.remove_missing and full_catalog_scan and existing_by_url:
-            candidate_removed_urls = set(existing_by_url) - active_set
-            removal_ratio = len(candidate_removed_urls) / max(1, len(existing_by_url))
             # Any failed brand/model scan makes the absence of URLs unreliable.
             scan_errors = [
                 error for error in errors[scan_errors_start:]
@@ -345,15 +365,13 @@ def main() -> int:
                     ("brand_scan:", "model_expand:", "blocked_by_robots")
                 )
             ]
-            if scan_errors:
-                removal_skipped_reason = f"{len(scan_errors)} scan errors"
-            elif candidate_removed_urls and removal_ratio > args.max_removal_ratio and not args.allow_large_removal:
-                removal_skipped_reason = (
-                    f"{len(candidate_removed_urls)} candidates ({removal_ratio:.1%}) exceed "
-                    f"max-removal-ratio={args.max_removal_ratio:.1%}"
-                )
-            else:
-                removed_urls = candidate_removed_urls
+            removed_urls, candidate_removed_urls, removal_skipped_reason = plan_catalog_removals(
+                set(existing_by_url),
+                active_set,
+                args.max_removal_ratio,
+                args.allow_large_removal,
+                scan_errors,
+            )
 
             if removal_skipped_reason:
                 print(
